@@ -1,12 +1,14 @@
 import os
 import re
 import sys
+from datetime import datetime, timedelta
 
 from bs4 import BeautifulSoup
 from loguru import logger
 from telegram import Update
 from telegram.ext import CallbackContext
 
+from apis import TODOIST_API
 from helper import is_not_correct_chat_id
 
 logger.add(
@@ -28,12 +30,12 @@ def clean_up_soup(soup_clean):
     return soup_clean.replace("\n", "")
 
 
-def write_notes(diluted_soup):
-    big_string = ""
+def write_notes(book_title, diluted_soup):
+    big_string = "# " + book_title + "\n\n"
     for item in diluted_soup:
         if item["class"][0] == "sectionHeading":
             temp = clean_up_soup(item.contents[0])
-            big_string += "## " + temp + "\n"
+            big_string += "#### " + temp + "\n"
         elif item["class"][0] == "noteText":
             big_string += "> " + clean_up_soup(item.string) + "\n\n\n---\n"
         elif item["class"][0] == "noteHeading":
@@ -66,7 +68,7 @@ def kindle_2_md(update: Update, context: CallbackContext):
     book_title = re.sub("\n|\r", "", soup.find(True, {"class": ["bookTitle"]}).contents[0])
     logger.info(book_title)
     diluted_soup = soup.find_all(True, {"class": ["sectionHeading", "noteHeading", "noteText"]})
-    big_string = write_notes(diluted_soup)
+    big_string = write_notes(book_title, diluted_soup)
     message_length = len(big_string)
     if message_length > TELEGRAM_MAX_MESSAGE_LENGTH:
         n = TELEGRAM_MAX_MESSAGE_LENGTH
@@ -76,4 +78,16 @@ def kindle_2_md(update: Update, context: CallbackContext):
 
     else:
         update.message.reply_text(big_string)
+    due = {
+        "date": (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d"),
+        "is_recurring": False,
+        "lang": "en",
+        "string": "tomorrow",
+        "timezone": None,
+    }
+    TODOIST_API.items.add(
+        '"{book_title}"-eBook nacharbeiten'.format(book_title=book_title), project_id=2281154095, due=due
+    )
+    logger.info(TODOIST_API.queue)
+    TODOIST_API.commit()
     os.remove(os.path.join(sys.path[0], FILENAME))

@@ -6,11 +6,11 @@ from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
 
 import speech_recognition as sr
-import todoist
 from loguru import logger
 from telegram import Update
 from telegram.ext import CallbackContext
 
+from apis import TODOIST_API
 from helper import is_not_correct_chat_id
 
 logger.add(
@@ -20,7 +20,6 @@ logger.add(
     diagnose=True,
 )
 
-api = todoist.TodoistAPI(os.environ["TODOIST_TOKEN"])
 r = sr.Recognizer()
 
 FILENAME = "temp.mp4"
@@ -44,7 +43,7 @@ def video_to_text(update: Update, context: CallbackContext):
     if is_not_correct_chat_id(update.message.chat_id):
         update.message.reply_text("Nah")
         return
-    api.sync()
+    TODOIST_API.sync()
     file_id = update.message.video.file_id
     file = context.bot.get_file(file_id)
     file_path = os.path.join(sys.path[0], FILENAME)
@@ -68,9 +67,9 @@ def video_to_text(update: Update, context: CallbackContext):
         "string": "tomorrow",
         "timezone": None,
     }
-    api.items.add(message, project_id=2281154095, due=due)
-    logger.info(api.queue)
-    api.commit()
+    TODOIST_API.items.add(message, project_id=2281154095, due=due)
+    logger.info(TODOIST_API.queue)
+    TODOIST_API.commit()
     os.remove(file_path)
     os.remove(new_file_path)
 
@@ -79,7 +78,7 @@ def voice_to_text(update: Update, context: CallbackContext):
     if is_not_correct_chat_id(update.message.chat_id):
         update.message.reply_text("Nah")
         return
-    api.sync()
+    TODOIST_API.sync()
     file_name = (
         str(update.message.chat_id) + "_" + str(update.message.from_user.id) + str(update.message.message_id) + ".ogg"
     )
@@ -100,11 +99,11 @@ def voice_to_text(update: Update, context: CallbackContext):
         for phrase in phrases:
             final_message = modification_date + " : " + phrase
             update.message.reply_text(final_message)
-            api.items.add(final_message)
+            TODOIST_API.items.add(final_message)
     else:
         final_message = modification_date + " : " + recognized_text
         update.message.reply_text(final_message)
-        api.items.add(final_message)
-    api.commit()
+        TODOIST_API.items.add(final_message)
+    TODOIST_API.commit()
     os.remove(file_name)
     os.remove(wav_converted_file_path)
