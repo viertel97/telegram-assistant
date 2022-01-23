@@ -88,6 +88,11 @@ def kindle_2_md(update: Update, context: CallbackContext):
     TODOIST_API.items.add(
         '"{book_title}"-eBook nacharbeiten'.format(book_title=book_title), project_id=2281154095, due=due
     )
+    TODOIST_API.items.add(
+        "eBook-Variablen in Tasker zurücksetzen bzw. durch nächstes Buch ersetzen",
+        project_id=2281154095,
+        due={"string": "today"},
+    )
     logger.info(TODOIST_API.queue)
     TODOIST_API.commit()
     os.remove(os.path.join(sys.path[0], FILENAME))
