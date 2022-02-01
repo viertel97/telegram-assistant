@@ -9,7 +9,7 @@ from telegram import Update
 from telegram.ext import CallbackContext
 
 from apis import TODOIST_API
-from helper import is_not_correct_chat_id
+from helper import CHAT_ID, is_not_correct_chat_id
 
 logger.add(
     os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
@@ -20,29 +20,49 @@ logger.add(
 
 TELEGRAM_MAX_MESSAGE_LENGTH = 4096
 
-FILENAME = "temp.html"
+INPUT_FILENAME = "temp.html"
+OUTPUT_FILENAME = "temp.md"
+
+
+_RE_COMBINE_WHITESPACE = re.compile(r"\s+")
 
 
 def clean_up_soup(soup_clean):
     soup_clean = re.sub(r"(.)(\s)(\,|\.|\;|\:|\—|\-|\–|\!|\?)", r"\1\3", soup_clean)
     soup_clean = re.sub(r"(.)(\s)(\,|\.|\;|\:|\—|\-|\–|\!|\?)", r"\1\3", soup_clean)
     soup_clean = re.sub(r"(\«|\‘|\“|\'|\")(\s)(.)", r"\1\3", soup_clean)
-    return soup_clean.replace("\n", "")
+    soup_clean = soup_clean.replace("\n", "")
+    soup_clean = _RE_COMBINE_WHITESPACE.sub(" ", soup_clean).strip()
+    return soup_clean.strip()
 
 
 def write_notes(book_title, diluted_soup):
-    big_string = "# " + book_title + "\n\n"
+    incoming_own_note = False
+
+    big_string = "# " + book_title.strip() + "\n"
     for item in diluted_soup:
-        if item["class"][0] == "sectionHeading":
+        item_class = item["class"][0]
+        if item_class == "sectionHeading":
             temp = clean_up_soup(item.contents[0])
             big_string += "#### " + temp + "\n"
-        elif item["class"][0] == "noteText":
-            big_string += "> " + clean_up_soup(item.string) + "\n\n\n---\n"
-        elif item["class"][0] == "noteHeading":
+
+        elif item_class == "noteText":
+            if incoming_own_note:
+                # big_string = big_string[:-1]
+                big_string += "> " + clean_up_soup(item.string)
+                incoming_own_note = False
+            else:
+                big_string += "" + clean_up_soup(item.string)
+            big_string += "\n"
+
+        elif item_class == "noteHeading":
             note_heading_string = item.get_text(" ", strip=True)
-            pages = re.compile(r"Page [0-9]+|Location [0-9]+")
-            page_numbers = pages.findall(note_heading_string)
-            big_string += " - ".join(page_numbers) + ":\n\n"
+            if "Note" in note_heading_string:
+                incoming_own_note = True
+            else:
+                pages = re.compile(r"Page [0-9]+|Location [0-9]+")
+                page_numbers = pages.findall(note_heading_string)
+                big_string += "##### " + " - ".join(page_numbers) + ":\n"
     return big_string
 
 
@@ -53,12 +73,12 @@ def kindle_2_md(update: Update, context: CallbackContext):
     file_id = update.message.document.file_id
     logger.info(update.message.document.file_name)
     file = context.bot.get_file(file_id)
-    file.download(os.path.join(sys.path[0], FILENAME))
+    file.download(os.path.join(sys.path[0], INPUT_FILENAME))
     soup = BeautifulSoup(
         open(
             os.path.join(
                 sys.path[0],
-                FILENAME,
+                INPUT_FILENAME,
             ),
             "r",
             encoding="utf-8",
@@ -69,15 +89,11 @@ def kindle_2_md(update: Update, context: CallbackContext):
     logger.info(book_title)
     diluted_soup = soup.find_all(True, {"class": ["sectionHeading", "noteHeading", "noteText"]})
     big_string = write_notes(book_title, diluted_soup)
-    message_length = len(big_string)
-    if message_length > TELEGRAM_MAX_MESSAGE_LENGTH:
-        n = TELEGRAM_MAX_MESSAGE_LENGTH
-        splitted_message = [big_string[i : i + n] for i in range(0, len(big_string), n)]
-        for message in splitted_message:
-            update.message.reply_text(message)
-
-    else:
-        update.message.reply_text(big_string)
+    with open(OUTPUT_FILENAME, "w+", encoding="utf-8") as text_file:
+        text_file.write(big_string)
+    context.bot.sendDocument(
+        chat_id=CHAT_ID, caption="Kindle-Notizen: " + book_title, document=open(OUTPUT_FILENAME, "rb")
+    )
     due = {
         "date": (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d"),
         "is_recurring": False,
@@ -95,4 +111,5 @@ def kindle_2_md(update: Update, context: CallbackContext):
     )
     logger.info(TODOIST_API.queue)
     TODOIST_API.commit()
-    os.remove(os.path.join(sys.path[0], FILENAME))
+    os.remove(os.path.join(sys.path[0], INPUT_FILENAME))
+    os.remove(os.path.join(sys.path[0], OUTPUT_FILENAME))
