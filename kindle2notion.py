@@ -1,9 +1,12 @@
+import json
 import os
 import re
 import sys
 from datetime import datetime, timedelta
 
+import fitz
 from bs4 import BeautifulSoup
+from dateutil import parser
 from loguru import logger
 from telegram import Update
 from telegram.ext import CallbackContext
@@ -18,12 +21,18 @@ logger.add(
     diagnose=True,
 )
 
+if os.name == "nt":
+    DEBUG = False
+else:
+    DEBUG = False
+logger.info("DEBUG MODE: " + str(DEBUG))
+
 TELEGRAM_MAX_MESSAGE_LENGTH = 4096
 
-INPUT_FILENAME = "temp.html"
-OUTPUT_FILENAME = "temp.md"
+INPUT_HTML_FILENAME = "temp.html"
+INPUT_PDF_FILENAME = "temp.pdf"
 
-
+LAST_FILE_INFORMATION_FILE = "last_file_information.json"
 _RE_COMBINE_WHITESPACE = re.compile(r"\s+")
 
 
@@ -70,15 +79,16 @@ def kindle_2_md(update: Update, context: CallbackContext):
     if is_not_correct_chat_id(update.message.chat_id):
         update.message.reply_text("Nah")
         return
+    TODOIST_API.sync()
     file_id = update.message.document.file_id
     logger.info(update.message.document.file_name)
     file = context.bot.get_file(file_id)
-    file.download(os.path.join(sys.path[0], INPUT_FILENAME))
+    file.download(os.path.join(sys.path[0], INPUT_HTML_FILENAME))
     soup = BeautifulSoup(
         open(
             os.path.join(
                 sys.path[0],
-                INPUT_FILENAME,
+                INPUT_HTML_FILENAME,
             ),
             "r",
             encoding="utf-8",
@@ -89,11 +99,31 @@ def kindle_2_md(update: Update, context: CallbackContext):
     logger.info(book_title)
     diluted_soup = soup.find_all(True, {"class": ["sectionHeading", "noteHeading", "noteText"]})
     big_string = write_notes(book_title, diluted_soup)
-    with open(OUTPUT_FILENAME, "w+", encoding="utf-8") as text_file:
+    valid_filename = re.sub("[^a-zA-Z0-9\\.\\-]", "_", book_title) + ".md"
+    with open(valid_filename, "w+", encoding="utf-8") as text_file:
         text_file.write(big_string)
     context.bot.sendDocument(
-        chat_id=CHAT_ID, caption="Kindle-Notizen: " + book_title, document=open(OUTPUT_FILENAME, "rb")
+        chat_id=CHAT_ID, caption="Kindle-Notizen: " + book_title, document=open(valid_filename, "rb")
     )
+    if not DEBUG:
+        os.remove(os.path.join(sys.path[0], INPUT_HTML_FILENAME))
+        # os.remove(os.path.join(sys.path[0], valid_filename))
+    set_last_infos(valid_filename)
+
+
+def set_last_infos(file_name):
+    dict_to_save = {"file_name": file_name, "timestamp": datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}
+    with open(LAST_FILE_INFORMATION_FILE, "w", encoding="utf-8") as f:
+        json.dump([dict_to_save], f, ensure_ascii=False, indent=4)
+
+
+def get_last_infos():
+    with open(LAST_FILE_INFORMATION_FILE, encoding="utf-8") as data_file:
+        data = json.loads(data_file.read())
+    return data[0]
+
+
+def add_book_rework_to_todoist(book_title):
     due = {
         "date": (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d"),
         "is_recurring": False,
@@ -102,7 +132,9 @@ def kindle_2_md(update: Update, context: CallbackContext):
         "timezone": None,
     }
     TODOIST_API.items.add(
-        '"{book_title}"-eBook nacharbeiten'.format(book_title=book_title), project_id=2281154095, due=due
+        '"{book_title}"-eBook nacharbeiten'.format(book_title=book_title),
+        project_id=2281154095,
+        due=due,
     )
     TODOIST_API.items.add(
         "eBook-Variablen in Tasker zurücksetzen bzw. durch nächstes Buch ersetzen",
@@ -110,6 +142,63 @@ def kindle_2_md(update: Update, context: CallbackContext):
         due={"string": "today"},
     )
     logger.info(TODOIST_API.queue)
-    TODOIST_API.commit()
-    os.remove(os.path.join(sys.path[0], INPUT_FILENAME))
-    os.remove(os.path.join(sys.path[0], OUTPUT_FILENAME))
+
+
+def do_highlighting(md_file_lines, pdf_file_name):
+    doc = fitz.open(INPUT_PDF_FILENAME)
+    single_word_annotation_list = []
+    for line in md_file_lines:
+        if line.startswith("#"):
+            continue
+        elif line.startswith("####"):
+            continue
+        elif line.startswith("#####"):
+            continue
+        elif line.startswith(">"):
+            continue
+        else:
+            highlight(doc, line.strip(), single_word_annotation_list)
+    doc.save(pdf_file_name, garbage=4, deflate=True, clean=True)
+
+
+def annotate_pdf(update: Update, context: CallbackContext):
+    last_infos = get_last_infos()
+    if (
+        is_not_correct_chat_id(update.message.chat_id)
+        or (datetime.now() - parser.parse(last_infos["timestamp"])).seconds > 360
+    ):
+        update.message.reply_text("Nah")
+        return
+    else:
+        update.message.reply_text("Could take a while")
+    file_id = update.message.document.file_id
+    logger.info(update.message.document.file_name)
+    file = context.bot.get_file(file_id)
+    file.download(os.path.join(sys.path[0], INPUT_PDF_FILENAME))
+    with open(last_infos["file_name"], encoding="utf-8") as f:
+        md_file_lines = f.readlines()
+
+    pdf_file_name = last_infos["file_name"][:-3] + ".pdf"
+    do_highlighting(md_file_lines, pdf_file_name)
+
+    add_book_rework_to_todoist(last_infos["file_name"][:-3])
+
+    if not DEBUG:
+        TODOIST_API.commit()
+        context.bot.sendDocument(
+            chat_id=CHAT_ID, caption="Updated PDF", document=open(os.path.join(sys.path[0], pdf_file_name), "rb")
+        )
+        os.remove(os.path.join(sys.path[0], pdf_file_name))
+        os.remove(os.path.join(sys.path[0], INPUT_PDF_FILENAME))
+        os.remove(os.path.join(sys.path[0], last_infos["file_name"]))
+
+
+def highlight(doc, text, single_word_annotation_list):
+    for page in doc:
+        text_instances = page.search_for(text, quads=True)
+        if len(text_instances) > 0:
+            if text not in single_word_annotation_list:
+                highlight = page.add_highlight_annot(text_instances)
+                highlight.update()
+            if text.count(" ") == 0:
+                single_word_annotation_list.append(text)
