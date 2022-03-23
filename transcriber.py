@@ -67,7 +67,9 @@ def video_to_text(update: Update, context: CallbackContext):
         "string": "tomorrow",
         "timezone": None,
     }
-    TODOIST_API.items.add(message, project_id=2281154095, due=due)
+    item = TODOIST_API.items.add(message, project_id=2281154095, due=due)
+    TODOIST_API.reminders.add(item["id"], due=due)
+
     logger.info(TODOIST_API.queue)
     TODOIST_API.commit()
     os.remove(file_path)

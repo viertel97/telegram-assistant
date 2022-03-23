@@ -1,7 +1,6 @@
 import os
 
 import speech_recognition as sr
-import todoist
 from loguru import logger
 from telegram import Update
 from telegram.ext import (
@@ -63,9 +62,9 @@ def main():
     audiobook_to_notion_handler = MessageHandler(Filters.video, transcriber.video_to_text)
     dispatcher.add_handler(audiobook_to_notion_handler)
 
-    pdf_annotation_handler = MessageHandler(Filters.document.pdf, kindle2notion.annotate_pdf)
-    dispatcher.add_handler(pdf_annotation_handler)
-
+    # pdf_annotation_handler = MessageHandler(Filters.document.pdf, kindle2notion.annotate_pdf)
+    # dispatcher.add_handler(pdf_annotation_handler)
+    #
     k2md = MessageHandler(Filters.document, kindle2notion.kindle_2_md)
     dispatcher.add_handler(k2md)
 
