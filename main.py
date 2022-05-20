@@ -12,8 +12,10 @@ from telegram.ext import (
 )
 
 import bht
+import document_handler
 import helper
 import kindle2notion
+import process_excel
 import transcriber
 import wol
 
@@ -28,7 +30,12 @@ else:
 logger.info("DEBUG MODE: " + str(DEBUG))
 
 logger.add(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
+    os.path.join(
+        os.path.dirname(os.path.abspath(__file__))
+        + "/logs/"
+        + os.path.basename(__file__)
+        + ".log"
+    ),
     format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
     backtrace=True,
     diagnose=True,
@@ -59,16 +66,19 @@ def main():
     oh_handler = MessageHandler(Filters.voice, transcriber.voice_to_text)
     dispatcher.add_handler(oh_handler)
 
-    audiobook_to_notion_handler = MessageHandler(Filters.video, transcriber.video_to_text)
+    audiobook_to_notion_handler = MessageHandler(
+        Filters.video, transcriber.video_to_text
+    )
     dispatcher.add_handler(audiobook_to_notion_handler)
 
-    # pdf_annotation_handler = MessageHandler(Filters.document.pdf, kindle2notion.annotate_pdf)
-    # dispatcher.add_handler(pdf_annotation_handler)
-    #
-    k2md = MessageHandler(Filters.document, kindle2notion.kindle_2_md)
-    dispatcher.add_handler(k2md)
+    doc_handler = MessageHandler(
+        Filters.document, document_handler.handle_document
+    )
+    dispatcher.add_handler(doc_handler)
 
-    change_language_handler = CommandHandler(str("change_language"), transcriber.change_video_language)
+    change_language_handler = CommandHandler(
+        str("change_language"), transcriber.change_video_language
+    )
     dispatcher.add_handler(change_language_handler)
 
     dispatcher.add_handler(start_handler)
