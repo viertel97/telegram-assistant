@@ -45,6 +45,7 @@ def change_video_language(update: Update, context: CallbackContext):
 
 
 def video_to_text(update: Update, context: CallbackContext):
+    logger.info("start: Video to text")
     if is_not_correct_chat_id(update.message.chat_id):
         update.message.reply_text("Nah")
         return
@@ -91,9 +92,11 @@ def video_to_text(update: Update, context: CallbackContext):
     TODOIST_API.commit()
     os.remove(file_path)
     os.remove(new_file_path)
+    logger.info("end: Video to text")
 
 
 def voice_to_text(update: Update, context: CallbackContext):
+    logger.info("start: Voice to text")
     if is_not_correct_chat_id(update.message.chat_id):
         update.message.reply_text("Nah")
         return
@@ -138,6 +141,7 @@ def voice_to_text(update: Update, context: CallbackContext):
     TODOIST_API.commit()
     os.remove(file_name)
     os.remove(wav_converted_file_path)
+    logger.info("end: Voice to text")
 
 
 def add_to_todoist(final_message, file_path):
