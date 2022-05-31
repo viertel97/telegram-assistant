@@ -20,12 +20,17 @@ logger.add(
 )
 
 
-def handle_excel(file_path, file_name):
+def handle_excel(file_path, file_name, update):
     logger.info(file_path)
     if "strong" in file_name:
         handle_strong(file_path)
+        update.message.reply_text("handle_strong: done")
+
     else:
         logger.error("unsupported handle_excel name: " + file_name)
+        update.message.reply_text(
+            "unsupported handle_excel name: " + file_name
+        )
 
 
 def handle_strong(file_path):

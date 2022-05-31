@@ -14,8 +14,6 @@ from telegram.ext import (
 import bht
 import document_handler
 import helper
-import kindle2notion
-import process_excel
 import transcriber
 import wol
 
