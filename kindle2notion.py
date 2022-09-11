@@ -8,8 +8,8 @@ from loguru import logger
 from telegram import Update
 from telegram.ext import CallbackContext
 
-from apis import TODOIST_API
-from helper import CHAT_ID, is_not_correct_chat_id
+from helper.config_helper import CHAT_ID, is_not_correct_chat_id
+from services.notion_service import TODOIST_API
 
 logger.add(
     os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),

@@ -1,6 +1,5 @@
 import os
 
-import speech_recognition as sr
 from loguru import logger
 from telegram import Update
 from telegram.ext import (
@@ -11,11 +10,10 @@ from telegram.ext import (
     Updater,
 )
 
-import bht
-import document_handler
-import helper
-import transcriber
-import wol
+from handler.document_handler import handle_document
+from services.grabber_service import dump_todoist_to_monica
+from services.transcriber_service import separate, video_to_text, voice_to_text
+from services.wol_service import wol
 
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 
@@ -28,12 +26,7 @@ else:
 logger.info("DEBUG MODE: " + str(DEBUG))
 
 logger.add(
-    os.path.join(
-        os.path.dirname(os.path.abspath(__file__))
-        + "/logs/"
-        + os.path.basename(__file__)
-        + ".log"
-    ),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
     format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
     backtrace=True,
     diagnose=True,
@@ -44,43 +37,29 @@ def start(update: Update, context: CallbackContext):
     update.message.reply_text(text="Do Stuff.")
 
 
-def add_bht_handler(list, dispatcher):
-    for command in list:
-        temp_handler = CommandHandler(str("bht_" + command), bht.bht)
-        dispatcher.add_handler(temp_handler)
-
-
 def main():
-
     updater = Updater(token=TELEGRAM_TOKEN, use_context=True)
     dispatcher = updater.dispatcher
+
     start_handler = CommandHandler(str("start"), start)
-    wol_handler = CommandHandler(str("wol"), wol.wol)
+    wol_handler = CommandHandler(str("wol"), wol)
+    book_seperator_handler = CommandHandler(str("book_separator"), separate)
+    oh_handler = MessageHandler(Filters.voice, voice_to_text)
+    audiobook_to_notion_handler = MessageHandler(Filters.video, video_to_text)
+    doc_handler = MessageHandler(Filters.document, handle_document)
+    dump_to_monica_handler = CommandHandler(str("dump_todoist_to_monica"), dump_todoist_to_monica)
 
-    bht_config = helper.get_config("bad_habit_config.json")
-    bad_habit_list = [x["bad_habit"] for x in bht_config]
-    add_bht_handler(bad_habit_list, dispatcher)
+    handlers = [
+        start_handler,
+        wol_handler,
+        book_seperator_handler,
+        oh_handler,
+        audiobook_to_notion_handler,
+        doc_handler,
+        dump_to_monica_handler,
+    ]
+    [dispatcher.add_handler(handler) for handler in handlers]
 
-    oh_handler = MessageHandler(Filters.voice, transcriber.voice_to_text)
-    dispatcher.add_handler(oh_handler)
-
-    audiobook_to_notion_handler = MessageHandler(
-        Filters.video, transcriber.video_to_text
-    )
-    dispatcher.add_handler(audiobook_to_notion_handler)
-
-    doc_handler = MessageHandler(
-        Filters.document, document_handler.handle_document
-    )
-    dispatcher.add_handler(doc_handler)
-
-    change_language_handler = CommandHandler(
-        str("change_language"), transcriber.change_video_language
-    )
-    dispatcher.add_handler(change_language_handler)
-
-    dispatcher.add_handler(start_handler)
-    dispatcher.add_handler(wol_handler)
     updater.start_polling()
     updater.idle()
 
