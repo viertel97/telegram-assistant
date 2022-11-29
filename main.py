@@ -1,17 +1,14 @@
 import os
 
+import telegram.ext.filters as filters
 from loguru import logger
 from telegram import Update
-from telegram.ext import (
-    CallbackContext,
-    CommandHandler,
-    Filters,
-    MessageHandler,
-    Updater,
-)
+from telegram.ext import Application, CallbackContext, CommandHandler, MessageHandler
 
+from handler.audio_handler import handle_audio
 from handler.document_handler import handle_document
 from services.grabber_service import dump_todoist_to_monica
+from services.notion_service import stretch_TPT
 from services.transcriber_service import separate, video_to_text, voice_to_text
 from services.wol_service import wol
 
@@ -33,35 +30,39 @@ logger.add(
 )
 
 
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text(text="Do Stuff.")
+async def start(update: Update, context: CallbackContext):
+    await update.message.reply_text(text="Do Stuff.")
+
+
+def get_command_handler():
+    return (
+        CommandHandler(str("start"), start),
+        CommandHandler(str("wol"), wol),
+        CommandHandler(str("book_separator"), separate),
+        CommandHandler(str("dump_todoist_to_monica"), dump_todoist_to_monica),
+        CommandHandler(str("stretch_tpt"), stretch_TPT),
+    )
+
+
+def get_message_handler():
+    return (
+        MessageHandler(filters.VOICE, voice_to_text),
+        MessageHandler(filters.VIDEO, video_to_text),
+        MessageHandler(filters.Document.ALL, handle_document),
+        MessageHandler(filters.AUDIO, handle_audio),
+    )
 
 
 def main():
-    updater = Updater(token=TELEGRAM_TOKEN, use_context=True)
-    dispatcher = updater.dispatcher
+    application = Application.builder().token(TELEGRAM_TOKEN).build()
 
-    start_handler = CommandHandler(str("start"), start)
-    wol_handler = CommandHandler(str("wol"), wol)
-    book_seperator_handler = CommandHandler(str("book_separator"), separate)
-    oh_handler = MessageHandler(Filters.voice, voice_to_text)
-    audiobook_to_notion_handler = MessageHandler(Filters.video, video_to_text)
-    doc_handler = MessageHandler(Filters.document, handle_document)
-    dump_to_monica_handler = CommandHandler(str("dump_todoist_to_monica"), dump_todoist_to_monica)
-
-    handlers = [
-        start_handler,
-        wol_handler,
-        book_seperator_handler,
-        oh_handler,
-        audiobook_to_notion_handler,
-        doc_handler,
-        dump_to_monica_handler,
+    [
+        application.add_handler(
+            handler,
+        )
+        for handler in get_command_handler() + get_message_handler()
     ]
-    [dispatcher.add_handler(handler) for handler in handlers]
-
-    updater.start_polling()
-    updater.idle()
+    application.run_polling()
 
 
 if __name__ == "__main__":
