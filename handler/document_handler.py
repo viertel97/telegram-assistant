@@ -8,6 +8,7 @@ from telegram.ext import CallbackContext
 from handler.excel_handler import handle_excel
 from handler.markdown_handler import handle_markdown
 from handler.zip_handler import handle_zip
+from helper.config_helper import is_not_correct_chat_id
 from helper.handler_helper import prepairing_document
 
 logger.add(
@@ -19,6 +20,9 @@ logger.add(
 
 
 async def handle_document(update: Update, context: CallbackContext):
+    if is_not_correct_chat_id(update.message.chat_id):
+        await update.message.reply_text("Nah")
+        return
     await update.message.reply_text("start handle_document")
     mime_type = update.message.document.mime_type
     logger.info("received: " + mime_type)

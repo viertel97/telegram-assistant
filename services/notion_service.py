@@ -9,6 +9,8 @@ from quarter_lib.notion import BASE_URL, HEADERS, get_database
 from telegram import Update
 from telegram.ext import CallbackContext
 
+from helper.config_helper import is_not_correct_chat_id
+
 logger.add(
     os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
     format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
@@ -30,6 +32,9 @@ def update_priority(page_id_priority):
 
 
 async def stretch_TPT(update: Update, context: CallbackContext):
+    if is_not_correct_chat_id(update.message.chat_id):
+        await update.message.reply_text("Nah")
+        return
     await update.message.reply_text("stretching TPT")
     df = get_database(TPT_ID)
     await update.message.reply_text("got TPT")

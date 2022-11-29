@@ -1,11 +1,12 @@
 import os
-import sys
 
-from helper.handler_helper import prepairing_audio
 from loguru import logger
 from quarter_lib.easy_voice_recorder import get_meditation_logs
 from telegram import Update
 from telegram.ext import CallbackContext
+
+from helper.config_helper import is_not_correct_chat_id
+from helper.handler_helper import prepairing_audio
 
 logger.add(
     os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
@@ -16,6 +17,9 @@ logger.add(
 
 
 async def handle_audio(update: Update, context: CallbackContext):
+    if is_not_correct_chat_id(update.message.chat_id):
+        await update.message.reply_text("Nah")
+        return
     mime_type, performer = update.message.audio.mime_type, update.message.audio.performer
     logger.info("received audio " + mime_type + " by " + performer)
     file_path, file_name = await prepairing_audio(update, context)
