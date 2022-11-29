@@ -1,0 +1,52 @@
+import asyncio
+import json
+import os
+import time
+
+import requests
+from loguru import logger
+from quarter_lib.notion import BASE_URL, HEADERS, get_database
+from telegram import Update
+from telegram.ext import CallbackContext
+
+logger.add(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
+    format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
+    backtrace=True,
+    diagnose=True,
+)
+
+TPT_ID = "b3042bf44bd14f40b0167764a0107c2f"
+
+
+def update_priority(page_id_priority):
+    url = BASE_URL + "pages/" + page_id_priority[0]
+    data = {"properties": {"Priority": {"number": page_id_priority[1]}}}
+    r = requests.patch(url, data=json.dumps(data), headers=HEADERS)
+    if r.status_code != 200:
+        print(r.status_code)
+        print(r.text)
+    return r
+
+
+async def stretch_TPT(update: Update, context: CallbackContext):
+    await update.message.reply_text("stretching TPT")
+    df = get_database(TPT_ID)
+    await update.message.reply_text("got TPT")
+    df["title"] = df["properties~Name~title"].apply(lambda x: x[0]["plain_text"])
+    df.drop(columns=["properties~Name~title"], inplace=True)
+    df = df[
+        ["id", "title", "properties~Priority~number", "properties~Completed~date~start", "properties~Obsolet~checkbox"]
+    ]
+    df.sort_values(by="properties~Priority~number", inplace=True)
+    df = df[df["properties~Obsolet~checkbox"] == False]
+    df = df[df["properties~Completed~date~start"].isna()]
+    df = df[df["properties~Priority~number"] >= 1]
+    df.reset_index(drop=True, inplace=True)
+    await update.message.reply_text("filtered TPT & starting to update")
+    for index, row in df.iterrows():
+        update_priority((df.iloc[index]["id"], index + 1))
+        if (index + 1) % 10 == 0:
+            logger.info(f"updated {index + 1} rows")
+        time.sleep(1)
+    await update.message.reply_text("Done")

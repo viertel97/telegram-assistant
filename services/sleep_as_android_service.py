@@ -1,42 +1,46 @@
 import csv
 import os
-import shutil
-import sys
-import zipfile
+from datetime import datetime
+from os import path
 
-from dateutil import parser
+import pandas as pd
+import pymysql
 from loguru import logger
-from telegram import Update
-from telegram.ext import CallbackContext
-
-from apis import update_sleep_entries
+from quarter_lib.database import close_server_connection, create_server_connection
 
 logger.add(
-    os.path.join(
-        os.path.dirname(os.path.abspath(__file__))
-        + "/logs/"
-        + os.path.basename(__file__)
-        + ".log"
-    ),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
     format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
     backtrace=True,
     diagnose=True,
 )
 
 
-def handle_zip(file_path, file_name):
-    folder = file_path[:-4]
-    with zipfile.ZipFile(file_path, "r") as zip_ref:
-        zip_ref.extractall(folder)
-    json = read_sleep_csv(folder + "/sleep-export.csv")
-    update_sleep_entries(json)
-    os.remove(file_path)
-    shutil.rmtree(folder)
+def update_sleep_entries(records):
+    not_added = []
+    logger.info("start update_sleep_entries")
+    connection = create_server_connection()
+    sql = """INSERT INTO `sleep_as_android` (`id`, `tz`, `sleep_from`,`sleep_to`, `sched`,`hours`,`rating`,`comment`,`snore`,`noise`,`cycles`,`deepsleep`,`lenadjust`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+    for record in records:
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(sql, record)
+                connection.commit()
+        except pymysql.err.IntegrityError as e:
+            not_added.append(record)
+            continue
+    close_server_connection(connection)
+    done_message = "added {new} new records from {total} in total".format(
+        new=len(records) - len(not_added), total=len(records)
+    )
+    logger.info(done_message)
+    logger.info("stop update_sleep_entries")
+    return done_message
 
 
 def read_sleep_csv(path):
     json = []
-    with open(path) as csvfile:
+    with open(path, encoding="utf-8") as csvfile:
         sleep_reader = csv.reader(csvfile, delimiter=",", quotechar="|")
         for row in sleep_reader:
             try:
@@ -48,17 +52,7 @@ def read_sleep_csv(path):
                     time = row[2].split().pop(3)
                     hour, minute = time.split(":")
                     current_time = (
-                        year
-                        + "-"
-                        + month[:-1]
-                        + "-"
-                        + day[1:-1]
-                        + "T"
-                        + hour
-                        + ":"
-                        + minute[0]
-                        + minute[1]
-                        + "SZ"
+                        year + "-" + month[:-1] + "-" + day[1:-1] + "T" + hour + ":" + minute[0] + minute[1] + "SZ"
                     )
                     sleepid = row[0]
                     tz = row[1]
@@ -81,11 +75,11 @@ def read_sleep_csv(path):
                         #     "sensor": "sleep"
                         # },
                         # "time": current_time,
-                        # "id": sleepid[1:-1],
+                        "id": sleepid[1:-1],
                         "tz": tz[1:-1],
-                        "from": parser.parse(sleepfrom[1:-1]),
-                        "to": parser.parse(sleepto[1:-1]),
-                        "sched": sched[1:-1],
+                        "from": datetime.strptime(sleepfrom[1:-1], "%d. %m. %Y %H:%M"),
+                        "to": datetime.strptime(sleepto[1:-1], "%d. %m. %Y %H:%M"),
+                        "sched": datetime.strptime(sched[1:-1], "%d. %m. %Y %H:%M"),
                         "hours": float(hours[1:-1]),
                         "rating": float(rating[1:-1]),
                         "comment": comment[1:-1],
@@ -95,7 +89,7 @@ def read_sleep_csv(path):
                         "cycles": float(cycles[1:-1]),
                         "deepsleep": float(deepsleep[1:-1]),
                         "lenadjust": float(lenadjust[1:-1]),
-                        # "geo": geo[1:-1]
+                        # "geo": geo[1:-1],
                     }
 
                     json.append(json_body)
@@ -103,4 +97,6 @@ def read_sleep_csv(path):
             except:
                 print("not worked")
                 continue
-    return json
+    df = pd.DataFrame(json)
+    df = df.where(pd.notnull(df), None)
+    return df.values.tolist()

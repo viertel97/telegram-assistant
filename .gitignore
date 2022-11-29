@@ -1,8 +1,14 @@
+requirements_custom.txt
+
+*.cmd
+*.code-workspace
 *.html
 *.ipynb
 *.ogg
 *.wav
 *.json
+*.txt
+*.mp4
 .idea/*
 # Byte-compiled / optimized / DLL files
 __pycache__/
