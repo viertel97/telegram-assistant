@@ -31,6 +31,9 @@ FILENAME = "temp.mp4"
 
 
 async def separate(update: Update, context: CallbackContext):
+    if is_not_correct_chat_id(update.message.chat_id):
+        await update.message.reply_text("Nah")
+        return
     now = datetime.now()
     message = "* Next book - added on {date} at {time}".format(
         date=now.strftime("%d.%m.%Y"),
@@ -49,10 +52,10 @@ async def separate(update: Update, context: CallbackContext):
 
 
 async def video_to_text(update: Update, context: CallbackContext):
-    logger.info("start: Video to text")
     if is_not_correct_chat_id(update.message.chat_id):
         await update.message.reply_text("Nah")
         return
+    logger.info("start: Video to text")
     file_id = update.message.video.file_id
     file = await context.bot.get_file(file_id)
     file_path = os.path.join(sys.path[0], FILENAME)
@@ -92,10 +95,10 @@ async def video_to_text(update: Update, context: CallbackContext):
 
 
 async def voice_to_text(update: Update, context: CallbackContext):
-    logger.info("start: Voice to text")
     if is_not_correct_chat_id(update.message.chat_id):
         await update.message.reply_text("Nah")
         return
+    logger.info("start: Voice to text")
     file_name = (
         str(update.message.chat_id) + "_" + str(update.message.from_user.id) + str(update.message.message_id) + ".ogg"
     )
