@@ -19,7 +19,11 @@ def handle_markdown(file_path, file_name, update):
     tasks, message = get_tasks(soup, os.path.splitext(file_name)[0])
     logger.info("get_tasks done")
     logger.info("start add_tasks")
-    add_tasks(tasks)
+    try:
+        message = add_tasks(tasks, message)
+    except Exception as e:
+        logger.error(e)
+        return str(e)
 
     logger.info("add_tasks done")
     return message

@@ -6,11 +6,11 @@ from telegram import Update
 from telegram.ext import Application, CallbackContext, CommandHandler, MessageHandler
 
 from handler.audio_handler import handle_audio
+from handler.command_handler import wol, separate, dump_todoist_to_monica, stretch_TPT
 from handler.document_handler import handle_document
-from services.grabber_service import dump_todoist_to_monica
-from services.notion_service import stretch_TPT
-from services.transcriber_service import separate, video_to_text, voice_to_text
-from services.wol_service import wol
+from handler.error_handler import handle_error
+from handler.video_handler import video_to_text
+from handler.voice_handler import voice_to_text
 
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 
@@ -60,8 +60,10 @@ def main():
         application.add_handler(
             handler,
         )
-        for handler in get_command_handler() + get_message_handler()
+        for handler in get_command_handler() + get_message_handler()  # + get_conversation_handler()
     ]
+    application.add_error_handler(handle_error)
+
     application.run_polling()
 
 

@@ -6,13 +6,13 @@ from datetime import datetime, timedelta
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from helper.config_helper import is_not_correct_chat_id
 from loguru import logger
 from telegram import Update
 from telegram.ext import CallbackContext
 from todoist_api_python.endpoints import get_sync_url
 from todoist_api_python.headers import create_headers
-
+from services.github_service import add_todoist_dump_to_github
+from helper.config_helper import is_not_correct_chat_id
 from services.monica_service import add_todoist_dump_to_monica
 from services.todoist_service import TODOIST_API, get_default_offset_including_check
 
@@ -40,6 +40,7 @@ async def dump_todoist_to_monica(update: Update, context: CallbackContext):
     days_to_dump = int(context.args[0]) if context.args else 3
     data, (content, public_content) = get_grabber_data(days_to_dump)
     timestamp = add_todoist_dump_to_monica(data)
+    add_todoist_dump_to_github(data)
     await update.message.reply_text("Dump was done at {timestamp}".format(timestamp=timestamp))
     await return_content(content, "All Content", update)
     await return_content(public_content, "Public Content", update)
@@ -54,7 +55,7 @@ async def return_content(content, intro, update: Update):
         else:
             messages_needed = len(content) // MAX_LENGTH_PER_MESSAGE + 1
             for i in range(messages_needed):
-                temp = content[i * MAX_LENGTH_PER_MESSAGE : (i + 1) * MAX_LENGTH_PER_MESSAGE]
+                temp = content[i * MAX_LENGTH_PER_MESSAGE: (i + 1) * MAX_LENGTH_PER_MESSAGE]
                 await update.message.reply_text(temp)
         time.sleep(5)
     else:
@@ -93,7 +94,8 @@ def get_comments():
 
 def filter_data(days):
     df_items = clean_api_response(TODOIST_API.get_tasks())
-    df_items = df_items[df_items.is_completed == 0]
+    df_projects = clean_api_response(TODOIST_API.get_projects())
+    # df_items = df_items[df_items.is_completed == 0]
     df_notes = get_comments()
     df_labels = clean_api_response(TODOIST_API.get_labels())
 
@@ -113,6 +115,7 @@ def filter_data(days):
         description = row["description"]
         notes = df_notes[df_notes.item_id == row_id]
         labels, checked = get_labels(df_filtered_items.loc[index, "labels"], df_labels)
+        project = df_projects.loc[df_projects['id'] == row["project_id"]]['name'].values[0]
 
         if len(notes) > 0:
             comments = notes["content"].values
@@ -126,6 +129,7 @@ def filter_data(days):
                 "comments": comments,
                 "labels": labels,
                 "description": description,
+                "project": project,
             }
         )
 
@@ -181,6 +185,7 @@ def filter_data(days):
                 "priority",
                 "comments",
                 "description",
+                "project",
                 "labels",
                 "source",
                 "id",
@@ -196,6 +201,7 @@ def filter_data(days):
                 "priority",
                 "comments",
                 "description",
+                "project",
                 "labels",
                 "source",
                 "id",

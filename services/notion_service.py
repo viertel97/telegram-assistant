@@ -5,7 +5,7 @@ import time
 
 import requests
 from loguru import logger
-from quarter_lib.notion import BASE_URL, HEADERS, get_database
+from quarter_lib_old.notion import BASE_URL, HEADERS, get_database
 from telegram import Update
 from telegram.ext import CallbackContext
 
@@ -37,7 +37,7 @@ async def stretch_TPT(update: Update, context: CallbackContext):
         return
     await update.message.reply_text("stretching TPT")
     df = get_database(TPT_ID)
-    await update.message.reply_text("got TPT")
+    await update.message.reply_text("got TPT", disable_notification=True)
     df["title"] = df["properties~Name~title"].apply(lambda x: x[0]["plain_text"])
     df.drop(columns=["properties~Name~title"], inplace=True)
     df = df[
@@ -46,9 +46,9 @@ async def stretch_TPT(update: Update, context: CallbackContext):
     df.sort_values(by="properties~Priority~number", inplace=True)
     df = df[df["properties~Obsolet~checkbox"] == False]
     df = df[df["properties~Completed~date~start"].isna()]
-    df = df[df["properties~Priority~number"] >= 1]
+    df = df[df["properties~Priority~number"] > 0]
     df.reset_index(drop=True, inplace=True)
-    await update.message.reply_text("filtered TPT & starting to update")
+    await update.message.reply_text("filtered TPT & starting to update", disable_notification=True)
     for index, row in df.iterrows():
         update_priority((df.iloc[index]["id"], index + 1))
         if (index + 1) % 10 == 0:

@@ -1,4 +1,3 @@
-import json
 import os
 import subprocess
 import sys
@@ -6,8 +5,8 @@ from datetime import datetime, timedelta
 
 import speech_recognition as sr
 from loguru import logger
-from quarter_lib.file_helper import delete_files
-from quarter_lib.transcriber import get_recognized_text
+from quarter_lib_old.file_helper import delete_files
+from quarter_lib_old.transcriber import get_recognized_text
 from telegram import Update
 from telegram.ext import CallbackContext
 
@@ -30,7 +29,7 @@ r = sr.Recognizer()
 FILENAME = "temp.mp4"
 
 
-async def separate(update: Update, context: CallbackContext):
+async def separate_audibooks(update: Update, context: CallbackContext):
     if is_not_correct_chat_id(update.message.chat_id):
         await update.message.reply_text("Nah")
         return
@@ -47,11 +46,17 @@ async def separate(update: Update, context: CallbackContext):
         "string": "tomorrow",
         "timezone": None,
     }
-    item = TODOIST_API.add_task(message, project_id=2281154095, due=due)
+    item = TODOIST_API.add_task(message, project_id=2281154095, due_string="tomorrow")
     update_due_date(item.id, due=due, add_reminder=True)
 
 
-async def video_to_text(update: Update, context: CallbackContext):
+def get_title_from_message(message):
+    title = message.split(" - ")[0]
+    title = title.replace("*", "")
+    return title
+
+
+async def transcribe_video(update: Update, context: CallbackContext):
     if is_not_correct_chat_id(update.message.chat_id):
         await update.message.reply_text("Nah")
         return
@@ -66,18 +71,17 @@ async def video_to_text(update: Update, context: CallbackContext):
     r_file = sr.AudioFile(new_file_path)
     with r_file as source:
         audio = r.record(source)
-    recognized_alternatives_de = r.recognize_google(audio, language="de-DE", show_all=True)
-    recognized_alternatives_en = r.recognize_google(audio, language="en-US", show_all=True)
-    recognized_text_de = recognized_alternatives_de["alternative"][0]
-    recognized_text_en = recognized_alternatives_en["alternative"][0]
+    recognized_text_de, recognized_text_en = audio_to_text(audio)
+
     now = datetime.now()
-    message = 'DE: "{recognized_text_de}" ({recognized_text_de_confidence}%) \n\n EN: "{recognized_text_en}" ({recognized_text_en_confidence}%) \n\n on {date} at {time} - add highlight to Zotero'.format(
+    message = 'DE: "{recognized_text_de}" ({recognized_text_de_confidence}%) \n\nEN: "{recognized_text_en}" ({recognized_text_en_confidence}%) \n\non {date} at {time}\n\nin {audiobook} - add highlight to Zotero'.format(
         recognized_text_de=recognized_text_de["transcript"],
         recognized_text_de_confidence=recognized_text_de["confidence"],
         recognized_text_en=recognized_text_en["transcript"],
         recognized_text_en_confidence=recognized_text_en["confidence"],
         date=now.strftime("%d.%m.%Y"),
         time=now.strftime("%H:%M"),
+        audiobook=update.message.caption,
     )
     await update.message.reply_text(message)
     due = {
@@ -87,20 +91,31 @@ async def video_to_text(update: Update, context: CallbackContext):
         "string": "tomorrow",
         "timezone": None,
     }
-    item = TODOIST_API.add_task(message, project_id=2281154095)
+    item = TODOIST_API.add_task(message, project_id="2281154095", due_string="tomorrow")
     update_due_date(item.id, due=due, add_reminder=True)
 
     delete_files([file_path, new_file_path])
     logger.info("end: Video to text")
 
 
-async def voice_to_text(update: Update, context: CallbackContext):
+def audio_to_text(audio):
+    recognized_alternatives_de = r.recognize_google(audio, language="de-DE", show_all=True)
+    recognized_alternatives_en = r.recognize_google(audio, language="en-US", show_all=True)
+    recognized_text_de = {'transcript': "", 'confidence': 0} if type(recognized_alternatives_de) is list else \
+        recognized_alternatives_de['alternative'][0]
+    recognized_text_en = {'transcript': "", 'confidence': 0} if recognized_alternatives_en is None else \
+        recognized_alternatives_en['alternative'][0]
+    return recognized_text_de, recognized_text_en
+
+
+async def transcribe_voice(update: Update, context: CallbackContext):
     if is_not_correct_chat_id(update.message.chat_id):
         await update.message.reply_text("Nah")
         return
     logger.info("start: Voice to text")
     file_name = (
-        str(update.message.chat_id) + "_" + str(update.message.from_user.id) + str(update.message.message_id) + ".ogg"
+            str(update.message.chat_id) + "_" + str(update.message.from_user.id) + str(
+        update.message.message_id) + ".ogg"
     )
     file_id = update.message.voice.file_id
     file = await context.bot.get_file(file_id)
@@ -115,10 +130,23 @@ async def voice_to_text(update: Update, context: CallbackContext):
         for phrase in phrases:
             final_message = modification_date + " : " + phrase
             await update.message.reply_text(final_message)
-            add_to_todoist_with_file(final_message, wav_converted_file_path)
+            if ("einkaufsliste" in phrase.lower()):
+                final_message = phrase.replace("Einkaufsliste", "").replace("auf", "").replace("der",
+                                                                                               "").replace(" ",
+                                                                                                           "")
+                await add_to_todoist_with_file(final_message, file_path, project_id="2247224944")
+            else:
+                await add_to_todoist_with_file(final_message, file_path)
+
     else:
         final_message = modification_date + " : " + recognized_text
+        if ("einkaufsliste" in recognized_text.lower()):
+            final_message = recognized_text.replace("Einkaufsliste", "").replace("auf", "").replace("der",
+                                                                                                    "").replace(" ",
+                                                                                                                "")
+            await add_to_todoist_with_file(final_message, file_path, project_id="2247224944")
+        else:
+            await add_to_todoist_with_file(final_message, file_path)
         await update.message.reply_text(final_message)
-        await add_to_todoist_with_file(final_message, wav_converted_file_path)
     delete_files([file_path, wav_converted_file_path])
     logger.info("end: Voice to text")
