@@ -1,7 +1,7 @@
 import os
 
 from loguru import logger
-from quarter_lib.easy_voice_recorder import get_meditation_logs
+from quarter_lib_old.easy_voice_recorder import get_meditation_logs
 from telegram import Update
 from telegram.ext import CallbackContext
 

@@ -14,7 +14,7 @@ logger.add(
 )
 
 
-async def wol(update: Update, context: CallbackContext):
+async def start_pc_via_wol(update: Update, context: CallbackContext):
     if is_not_correct_chat_id(update.message.chat_id):
         await update.message.reply_text("Nah")
         return
