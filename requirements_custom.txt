@@ -1,0 +1,2 @@
+--index-url https://Quarter-Lib-Old:72jwg75htze26xpco6srztofaffvo6mcdp2ppzsrwsnggjmegzbq@pkgs.dev.azure.com/viertel/Quarter-Lib-Old/_packaging/Quarter-Lib-Old/pypi/simple/
+quarter-lib-old
