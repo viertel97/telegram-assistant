@@ -5,7 +5,6 @@
 *.ogg
 *.wav
 *.json
-*.txt
 *.mp4
 .idea/*
 # Byte-compiled / optimized / DLL files
