@@ -7,15 +7,18 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from loguru import logger
+from quarter_lib.akeyless import get_secrets
 from telegram import Update
 from telegram.ext import CallbackContext
 from todoist_api_python.endpoints import get_sync_url
 from todoist_api_python.headers import create_headers
-from services.github_service import add_todoist_dump_to_github
+
 from helper.config_helper import is_not_correct_chat_id
+from services.github_service import add_todoist_dump_to_github
 from services.monica_service import add_todoist_dump_to_monica
 from services.todoist_service import TODOIST_API, get_default_offset_including_check
 
+TODOIST_TOKEN = get_secrets("todoist/token")
 CHECKED = "Yes"
 UNCHECKED = "No"
 DEFAULT_OFFSET = timedelta(hours=2)
@@ -81,7 +84,7 @@ def clean_api_response(api_response):
     return pd.DataFrame(temp_list)
 
 
-HEADERS = create_headers(token=os.environ["TODOIST_TOKEN"])
+HEADERS = create_headers(token=TODOIST_TOKEN)
 
 
 def get_comments():

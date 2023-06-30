@@ -1,8 +1,8 @@
-import os
 import uuid
 from datetime import timedelta
 
-from loguru import logger
+from quarter_lib.akeyless import get_secrets
+from quarter_lib.logging import setup_logging
 from quarter_lib_old.todoist import (
     add_note_with_attachement,
     get_user_state,
@@ -12,14 +12,9 @@ from quarter_lib_old.todoist import (
 )
 from todoist_api_python.api import TodoistAPI
 
-TODOIST_API = TodoistAPI(os.environ["TODOIST_TOKEN"])
-
-logger.add(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
-    format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
-    backtrace=True,
-    diagnose=True,
-)
+logger = setup_logging(__file__)
+TODOIST_TOKEN = get_secrets("todoist/token")
+TODOIST_API = TodoistAPI(TODOIST_TOKEN)
 
 
 def run_todoist_sync_commands(commands):

@@ -47,7 +47,6 @@ async def handle_document(update: Update, context: CallbackContext):
     elif mime_type == "application/pdf":
         await update.message.reply_text("start handle_pdf")
         await handle_pdf(file_path, file_name, update)
-        # await update.message.reply_text(done_message)
     else:
         logger.error("unsupported mime type: " + mime_type)
         await update.message.reply_text("unsupported mime type: " + mime_type)

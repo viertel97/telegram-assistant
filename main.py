@@ -2,6 +2,7 @@ import os
 
 import telegram.ext.filters as filters
 from loguru import logger
+from quarter_lib.akeyless import get_secrets
 from telegram import Update
 from telegram.ext import Application, CallbackContext, CommandHandler, MessageHandler
 
@@ -12,7 +13,7 @@ from handler.error_handler import handle_error
 from handler.video_handler import video_to_text
 from handler.voice_handler import voice_to_text
 
-TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
+TELEGRAM_TOKEN = get_secrets("telegram/token")
 
 if os.name == "nt":
     file_path = "bad_habit.json"
