@@ -4,20 +4,16 @@ from datetime import datetime
 
 import pandas as pd
 import speech_recognition as sr
-from loguru import logger
 from pydub import AudioSegment
+from quarter_lib.logging import setup_logging
 from telegram import Update
 
+from services.logging_service import log_to_telegram
 from services.microsoft_service import get_file_from_path
 from services.todoist_service import add_file_to_todoist
 from services.transcriber_service import audio_to_text
 
-logger.add(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
-    format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
-    backtrace=True,
-    diagnose=True,
-)
+logger = setup_logging(__file__)
 
 
 def get_title_and_author(caption):
@@ -32,9 +28,7 @@ async def get_bookmark_transcriptions(xml_data, caption, update: Update):
     to_delete = []
     df = pd.DataFrame(xml_data)
     for file_name, group in df.groupby("fileName"):
-        logger.info("start downloading and processing of file: " + file_name)
-        await update.message.reply_text(text="start downloading and processing of file: " + file_name,
-                                        disable_notification=True)
+        await log_to_telegram("start downloading and processing of file: " + file_name, logger, update)
         get_file_from_path("Musik/Hörbücher/" + caption[11:][:-19] + "/" + file_name + ':/content', file_name)
         logger.info("downloaded file '{file_name}' - start conversion".format(file_name=file_name))
         sound = AudioSegment.from_file(file_name)
@@ -93,6 +87,5 @@ async def get_bookmark_transcriptions(xml_data, caption, update: Update):
                                                                                                   title,
                                                                                                   author,
                                                                                                   len(result_list))
-    logger.info(message)
-    await update.message.reply_text(message, disable_notification=True)
+    await log_to_telegram(message, logger, update)
     return result_list, title, author

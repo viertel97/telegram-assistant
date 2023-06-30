@@ -4,20 +4,14 @@ import re
 
 import fitz
 import pandas as pd
-from loguru import logger
+from quarter_lib.logging import setup_logging
 from telegram import Update
 
+from services.logging_service import log_to_telegram
 from services.todoist_service import get_items_by_todoist_project, run_todoist_sync_commands, update_description
 
+logger = setup_logging(__file__)
 FINDING_THRESHOLD = 0.75
-
-logger.add(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
-    format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
-    backtrace=True,
-    diagnose=True,
-)
-
 LANGUAGE = "de"
 NUMBER_OF_WORDS_TO_SEARCH = 4
 
@@ -62,31 +56,31 @@ async def handle_pdf(file_path, file_name, update: Update):
             text_to_search = task["recognized_text_" + selected_language]
             logger.info("text to search: {}".format(text_to_search))
             split_search_text = text_to_search.split(" ")
-            findings = await search_for_text_in_document(document, split_search_text)
+            findings = search_for_text_in_document(document, split_search_text)
             logger.info(f"found {len(findings)} entries for '{text_to_search}'")
             if len(findings):
                 filtered_findings, page_numbers = get_filtered_findings(findings)
                 if filtered_findings:
                     try:
-                        await add_annotation_to_finding(filtered_findings, task, text_to_search)
+                        content = await add_annotation_to_finding(filtered_findings, task, text_to_search)
                         command_list.append({"type": "item_close", "args": {"id": task.id}})
-
+                        await log_to_telegram(
+                            f"added {content} to page numbers {page_numbers} for filtered findings {filtered_findings}",
+                            logger, update)
                     except ValueError as e:
                         not_found_counter += 1
                         logger.error(e)
                         await update_task_with_page_numbers(page_numbers, task)
-                        await update.message.reply_text("Error while highlighting text '{}' on page {}.".format(
-                            text_to_search, page_numbers[0]))
+                        await log_to_telegram("Error while highlighting text '{}' on page {}.".format(
+                            text_to_search, page_numbers[0]), logger, update)
                 else:
 
                     not_found_counter += 1
                     await update_task_with_page_numbers(page_numbers, task)
-                    await update.message.reply_text(
+                    await log_to_telegram(
                         "The text '{}' was found on different pages [{}] and can't be highlighted".format(
                             text_to_search,
-                            str(page_numbers))
-                        , disable_notification=True)
-                    logger.info("found entries are not in the same page")
+                            str(page_numbers)), logger, update)
             else:
                 logger.info("nothing found")
         new_file_path = file_path[:-4].replace("_V" + str(file_version), "")
@@ -100,8 +94,7 @@ async def handle_pdf(file_path, file_name, update: Update):
         os.remove(new_file_path)
         response = run_todoist_sync_commands(command_list)
     else:
-        logger.error("no book for the caption '{}' found".format(selected_book_from_todoist))
-        await update.message.reply_text("no book for the caption '{}' found".format(selected_book_from_todoist))
+        await log_to_telegram("no book for the caption '{}' found".format(selected_book_from_todoist), logger, update)
 
 
 async def add_annotation_to_finding(filtered_findings, task, text_to_search):
@@ -113,9 +106,10 @@ async def add_annotation_to_finding(filtered_findings, task, text_to_search):
         content = "text_to_search: " + text_to_search
     highlight.set_info({"content": content})
     highlight.update()
+    return content
 
 
-async def search_for_text_in_document(document, split_search_text):
+def search_for_text_in_document(document, split_search_text):
     findings = []
     for index in range(len(split_search_text)):
         search_list = split_search_text[index: index + NUMBER_OF_WORDS_TO_SEARCH]

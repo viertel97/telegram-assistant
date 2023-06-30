@@ -1,18 +1,11 @@
 import os
 import sys
 
-from handler.excel_handler import handle_excel
-from handler.zip_handler import handle_zip
-from loguru import logger
+from quarter_lib.logging import setup_logging
 from telegram import Update
 from telegram.ext import CallbackContext
 
-logger.add(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
-    format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
-    backtrace=True,
-    diagnose=True,
-)
+logger = setup_logging(__file__)
 
 
 async def prepairing_document(update: Update, context: CallbackContext):

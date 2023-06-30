@@ -1,11 +1,11 @@
 import json
 import os
+from quarter_lib.akeyless import get_secrets
 
-CHAT_ID = int(os.environ["TELEGRAM_CHAT_ID"])
-
+CHAT_ID = get_secrets("telegram/chat_id")
 
 def is_not_correct_chat_id(chat_id):
-    return not (chat_id == CHAT_ID)
+    return not (str(chat_id) == CHAT_ID)
 
 
 def get_config(file_path):

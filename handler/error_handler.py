@@ -11,8 +11,10 @@ from telegram.ext import ContextTypes
 from todoist_api_python.api import TodoistAPI
 
 from helper.config_helper import CHAT_ID
+from quarter_lib.akeyless import get_secrets
 
-TODOIST_API = TodoistAPI(os.environ["TODOIST_TOKEN"])
+TODOIST_TOKEN = get_secrets("todoist/token")
+TODOIST_API = TodoistAPI(TODOIST_TOKEN)
 MAX_LENGTH_PER_MESSAGE = 4096
 
 logger.add(
