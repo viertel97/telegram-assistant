@@ -72,7 +72,7 @@ async def handle_xml(file_path, file_name, update: Update):
                          }
             }
         )
-    sync_command_results = run_todoist_sync_commands(command_list).json()
+    sync_command_results = run_todoist_sync_commands(command_list)
     message = "Transcribed {} bookmarks for {} by {}".format(
         len(transcribed_bookmarks), title, author) + " and added them to Todoist"
 

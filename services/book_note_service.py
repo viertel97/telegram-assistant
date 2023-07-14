@@ -1,29 +1,20 @@
-import os
 import time
 
 import markdown
 import requests
 from bs4 import BeautifulSoup
-from loguru import logger
+from quarter_lib.logging import setup_logging
 
 from helper.caching import ttl_cache
 from services.todoist_service import run_todoist_sync_commands, get_items_by_todoist_project
 
+logger = setup_logging(__file__)
 PROJECT_IDS_URL = "https://viertel-it.de/files/rework_project_ids.json"
-
-
-
-
 
 OBSIDIAN_AUTOSTART_TRIGGER = "Obsidian-Eintrag überdenken"
 
 NUMBER_OF_ITEMS_PER_CHUNK = 40
-logger.add(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
-    format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
-    backtrace=True,
-    diagnose=True,
-)
+
 
 @ttl_cache(ttl=60 * 60)
 def get_ids_from_web():
@@ -31,6 +22,7 @@ def get_ids_from_web():
     response = requests.get(PROJECT_IDS_URL, headers={'User-Agent': 'Mozilla/5.0'}, verify=False)
     data = response.json()
     return data
+
 
 def read_markdown(file_path):
     with open(file_path, "r", encoding="utf-8") as f:

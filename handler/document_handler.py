@@ -37,7 +37,7 @@ async def handle_document(update: Update, context: CallbackContext):
         done_message = await handle_zip(file_path, file_name, update)
         await update.message.reply_text(done_message)
     elif mime_type == "text/markdown":
-        await update.message.reply_text("start handle_makdown")
+        await update.message.reply_text("start handle_markdown")
         done_message = handle_markdown(file_path, file_name, update)
         await update.message.reply_text(done_message)
     elif mime_type == "text/xml" or mime_type == "application/xml":
