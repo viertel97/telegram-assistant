@@ -1,14 +1,8 @@
-import os
 import xml.etree.ElementTree as ET
 
-from loguru import logger
+from quarter_lib.logging import setup_logging
 
-logger.add(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
-    format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
-    backtrace=True,
-    diagnose=True,
-)
+logger = setup_logging(__file__)
 
 
 def xml_to_dict(data):
@@ -20,4 +14,6 @@ def xml_to_dict(data):
         for child in item:
             data_dict[child.tag] = child.text
         data.append(data_dict)
+    logger.info("found {} bookmarks in xml".format(len(data)))
+    logger.info(data)
     return data

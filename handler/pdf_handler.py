@@ -7,6 +7,7 @@ import pandas as pd
 from quarter_lib.logging import setup_logging
 from telegram import Update
 
+from helper.file_helper import delete_files
 from services.logging_service import log_to_telegram
 from services.todoist_service import get_items_by_todoist_project, run_todoist_sync_commands, update_description
 
@@ -37,6 +38,7 @@ def get_filtered_findings(findings):
 
 
 async def handle_pdf(file_path, file_name, update: Update):
+    to_delete = []
     tasks = get_items_by_todoist_project("2281154095")
     tasks = [filter_content(task.__dict__) for task in tasks]
     df = pd.DataFrame(tasks)
@@ -45,6 +47,7 @@ async def handle_pdf(file_path, file_name, update: Update):
     selected_book_from_todoist, selected_language = splitted_caption[0], splitted_caption[1]
     if selected_book_from_todoist in grouped_df.groups:
         group = grouped_df.get_group(selected_book_from_todoist)
+        await log_to_telegram(f"found '{len(group)}' tasks for '{selected_book_from_todoist}'", logger, update)
         document = fitz.open(file_path)
         not_found_counter = 0
         try:
@@ -57,7 +60,7 @@ async def handle_pdf(file_path, file_name, update: Update):
             logger.info("text to search: {}".format(text_to_search))
             split_search_text = text_to_search.split(" ")
             findings = search_for_text_in_document(document, split_search_text)
-            logger.info(f"found {len(findings)} entries for '{text_to_search}'")
+            logger.info(f"found '{len(findings)}' entries for '{text_to_search}'")
             if len(findings):
                 filtered_findings, page_numbers = get_filtered_findings(findings)
                 if filtered_findings:
@@ -65,7 +68,7 @@ async def handle_pdf(file_path, file_name, update: Update):
                         content = await add_annotation_to_finding(filtered_findings, task, text_to_search)
                         command_list.append({"type": "item_close", "args": {"id": task.id}})
                         await log_to_telegram(
-                            f"added {content} to page numbers {page_numbers} for filtered findings {filtered_findings}",
+                            f"added '{content}' to page numbers '{page_numbers}' for '{len(filtered_findings)}' filtered findings",
                             logger, update)
                     except ValueError as e:
                         not_found_counter += 1
@@ -82,7 +85,11 @@ async def handle_pdf(file_path, file_name, update: Update):
                             text_to_search,
                             str(page_numbers)), logger, update)
             else:
-                logger.info("nothing found")
+                await log_to_telegram("nothing found for '{}'".format(text_to_search), logger, update)
+                not_found_counter += 1
+        if not_found_counter == len(group):
+            await log_to_telegram("nothing found for all {} tasks".format(len(group)), logger, update)
+            return
         new_file_path = file_path[:-4].replace("_V" + str(file_version), "")
         new_file_path = os.path.join(new_file_path + "_V" + str(file_version + 1) + ".pdf")
         document.save(new_file_path)
@@ -90,11 +97,13 @@ async def handle_pdf(file_path, file_name, update: Update):
                                             caption="'{}' out of possible '{}' could not have been added - therefore '{}' annotations has been added sucecessfully to the PDF '{}'.".format(
                                                 not_found_counter, group.shape[0], group.shape[0] - not_found_counter,
                                                 file_name))
-        os.remove(file_path)
-        os.remove(new_file_path)
         response = run_todoist_sync_commands(command_list)
+        await log_to_telegram("synced todoist with response '{}'".format(response), logger, update)
+        to_delete.append(file_path)
+        to_delete.append(new_file_path)
     else:
         await log_to_telegram("no book for the caption '{}' found".format(selected_book_from_todoist), logger, update)
+    delete_files(to_delete)
 
 
 async def add_annotation_to_finding(filtered_findings, task, text_to_search):
@@ -126,4 +135,4 @@ def search_for_text_in_document(document, split_search_text):
 async def update_task_with_page_numbers(page_numbers, task):
     new_description = json.loads(task.description)
     new_description['found_pages'] = page_numbers
-    await update_description(task.id, json.dumps(new_description, indent=4, sort_keys=True))
+    await update_description(task.id, json.dumps(new_description, indent=4, sort_keys=True, ensure_ascii=False))

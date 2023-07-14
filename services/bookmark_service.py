@@ -1,4 +1,3 @@
-import os
 import time
 from datetime import datetime
 
@@ -8,6 +7,7 @@ from pydub import AudioSegment
 from quarter_lib.logging import setup_logging
 from telegram import Update
 
+from helper.file_helper import delete_files
 from services.logging_service import log_to_telegram
 from services.microsoft_service import get_file_from_path
 from services.todoist_service import add_file_to_todoist
@@ -35,9 +35,14 @@ async def get_bookmark_transcriptions(xml_data, caption, update: Update):
         logger.info("converted file '{file_name}' - start reading and transcriptions".format(file_name=file_name))
         for row_index, row in group.iterrows():
             file_position = int(row['filePosition'])
-
+            duration_in_seconds = len(sound) / 1000
             logger.info("extracting audio segment from file: " + file_name + " at position: " + str(file_position))
-            temp_sound = sound[(file_position - 5) * 1000:(file_position + 5) * 1000]
+            if file_position < 5:
+                temp_sound = sound[:(file_position + 5) * 1000]
+            elif file_position > duration_in_seconds - 5:
+                temp_sound = sound[(file_position - 5) * 1000:]
+            else:
+                temp_sound = sound[(file_position - 5) * 1000:(file_position + 5) * 1000]
 
             temp_file_name = "{file_name}-{file_position}.mp3".format(file_name=file_name[:-4],
                                                                       file_position=str(file_position))
@@ -82,7 +87,7 @@ async def get_bookmark_transcriptions(xml_data, caption, update: Update):
         time.sleep(3)
         to_delete.append(file_name)
     title, author = get_title_and_author(caption)
-    [os.remove(file) for file in to_delete]
+    delete_files(to_delete)
     message = "finished processing {} files from {} by {} and extracted {} transcriptions".format(len(df),
                                                                                                   title,
                                                                                                   author,

@@ -1,8 +1,6 @@
-import os
-
 import telegram.ext.filters as filters
-from loguru import logger
 from quarter_lib.akeyless import get_secrets
+from quarter_lib.logging import setup_logging
 from telegram import Update
 from telegram.ext import Application, CallbackContext, CommandHandler, MessageHandler
 
@@ -13,22 +11,9 @@ from handler.error_handler import handle_error
 from handler.video_handler import video_to_text
 from handler.voice_handler import voice_to_text
 
+logger = setup_logging(__file__)
+
 TELEGRAM_TOKEN = get_secrets("telegram/token")
-
-if os.name == "nt":
-    file_path = "bad_habit.json"
-    DEBUG = True
-else:
-    file_path = "/home/pi/python/bad_habit.json"
-    DEBUG = False
-logger.info("DEBUG MODE: " + str(DEBUG))
-
-logger.add(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
-    format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
-    backtrace=True,
-    diagnose=True,
-)
 
 
 async def start(update: Update, context: CallbackContext):
@@ -64,7 +49,7 @@ def main():
         for handler in get_command_handler() + get_message_handler()  # + get_conversation_handler()
     ]
     application.add_error_handler(handle_error)
-
+    logger.info("Start polling")
     application.run_polling()
 
 
