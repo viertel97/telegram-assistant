@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from quarter_lib.logging import setup_logging
 
 from helper.caching import ttl_cache
+from services.logging_service import log_to_telegram
 from services.todoist_service import run_todoist_sync_commands, get_items_by_todoist_project
 
 logger = setup_logging(__file__)
@@ -51,9 +52,7 @@ def get_tasks(soup, file_name):
                         title=file_name,
                     )
                 )
-        return tasks, "{len} annotations with {comments} comments were found in '{title}' and added to Todoist".format(
-            len=len(tasks), comments=len([task for task in tasks if type(task) == tuple]), title=file_name
-        )
+        return tasks, len(tasks), len([task for task in tasks if type(task) == tuple]), file_name
 
 
 def paragraph_to_task(paragraph, title, comment=None):
@@ -78,10 +77,10 @@ def get_smallest_project():
     return project_ids[idx], min_size, idx
 
 
-def add_tasks(tasks, message):
+async def add_tasks(tasks, message, update):
     project_id, min_size, idx = get_smallest_project()
-    message = "{message} - List {idx} ({project_id}) was chosen as the smallest project with {min_size} items".format(
-        idx=idx + 1, message=message, project_id=project_id, min_size=min_size)
+    await log_to_telegram("List {idx} ({project_id}) was chosen as the smallest project with {min_size} items".format(
+        idx=idx + 1, project_id=project_id, min_size=min_size), logger, update)
     if min_size + len(tasks) <= 300:
         command_list = []
         for task in tasks:
@@ -108,9 +107,11 @@ def add_tasks(tasks, message):
                 logger.info("sleeping for 10 seconds")
                 time.sleep(10)
     else:
-        raise Exception("Project {project_id} is full".format(project_id=project_id))
-    return message
-
+        error_message = "Project {project_id} is full and cannot handle {len} more tasks".format(
+            project_id=project_id, len=len(tasks)
+        )
+        await log_to_telegram(error_message, logger, update)
+        raise Exception(error_message)
 
 def chunks(lst, n):
     for i in range(0, len(lst), n):
