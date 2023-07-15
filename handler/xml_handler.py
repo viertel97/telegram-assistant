@@ -46,7 +46,7 @@ async def handle_xml(file_path, file_name, update: Update):
             "file_position": transcribed_bookmark["file_position"],
             "annotation": transcribed_bookmark["annotation"],
         }
-        desc = dumps(description_dict, indent=4, sort_keys=True, ensure_ascii=False)
+        desc = dumps(description_dict, indent=4, sort_keys=True, ensure_ascii=False).encode('utf8')
         generated_temp_id = "_" + str(uuid.uuid4())
         command_list.append(
             {

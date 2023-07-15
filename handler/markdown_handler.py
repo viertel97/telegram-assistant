@@ -1,26 +1,26 @@
 import os
 
-from loguru import logger
 from services.book_note_service import add_tasks, get_tasks, read_markdown
+from quarter_lib.logging import setup_logging
 
-logger.add(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
-    format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
-    backtrace=True,
-    diagnose=True,
-)
+from services.logging_service import log_to_telegram
+
+logger = setup_logging(__file__)
 
 
-def handle_markdown(file_path, file_name, update):
+async def handle_markdown(file_path, file_name, update):
     logger.info("start handle_markdown")
     soup = read_markdown(file_path)
     logger.info("read_markdown done")
     logger.info("start get_tasks")
-    tasks, message = get_tasks(soup, os.path.splitext(file_name)[0])
+    tasks, number_of_tasks, number_of_comments, title = get_tasks(soup, os.path.splitext(file_name)[0])
+    message = "{len} annotations with {comments} comments were found in '{title}' and will now be added to Todoist".format(
+        len=number_of_tasks, comments=number_of_comments, title=title)
+    await log_to_telegram(message, logger, update)
     logger.info("get_tasks done")
     logger.info("start add_tasks")
     try:
-        message = add_tasks(tasks, message)
+        await add_tasks(tasks, message, update)
     except Exception as e:
         logger.error(e)
         return str(e)
