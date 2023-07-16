@@ -4,20 +4,14 @@ import os
 import time
 
 import requests
-from loguru import logger
 from quarter_lib_old.notion import BASE_URL, HEADERS, get_database
 from telegram import Update
 from telegram.ext import CallbackContext
 
 from helper.config_helper import is_not_correct_chat_id
+from quarter_lib.logging import setup_logging
 
-logger.add(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
-    format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
-    backtrace=True,
-    diagnose=True,
-)
-
+logger = setup_logging(__file__)
 TPT_ID = "b3042bf44bd14f40b0167764a0107c2f"
 
 
@@ -53,5 +47,7 @@ async def stretch_TPT(update: Update, context: CallbackContext):
         update_priority((df.iloc[index]["id"], index + 1))
         if (index + 1) % 10 == 0:
             logger.info(f"updated {index + 1} rows")
+        if (index + 1) % 30 == 0:
+            await update.message.reply_text(f"updated {index + 1} rows", disable_notification=True)
         time.sleep(1)
     await update.message.reply_text("Done")
