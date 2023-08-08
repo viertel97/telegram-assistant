@@ -77,6 +77,10 @@ def get_smallest_project():
     return project_ids[idx], min_size, idx
 
 
+def split_str_to_chars(text, chars=2047):
+    return [text[i : i + chars] for i in range(0, len(text), chars)][0]
+
+
 async def add_tasks(tasks, message, update):
     project_id, min_size, idx = get_smallest_project()
     await log_to_telegram("List {idx} ({project_id}) was chosen as the smallest project with {min_size} items".format(
@@ -85,6 +89,7 @@ async def add_tasks(tasks, message, update):
         command_list = []
         for task in tasks:
             if type(task) == tuple:
+                task[0] = split_str_to_chars(task[0])
                 command_list.append(
                     {
                         "type": "item_add",
@@ -92,6 +97,7 @@ async def add_tasks(tasks, message, update):
                     }
                 )
             else:
+                task = split_str_to_chars(task)
                 command_list.append({"type": "item_add", "args": {"content": task, "project_id": project_id}})
         logger.info("adding batch of {len} tasks".format(len=len(command_list)))
         chunks_of_40 = list(chunks(command_list, NUMBER_OF_ITEMS_PER_CHUNK))
