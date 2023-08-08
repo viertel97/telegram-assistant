@@ -19,11 +19,6 @@ async def handle_markdown(file_path, file_name, update):
     await log_to_telegram(message, logger, update)
     logger.info("get_tasks done")
     logger.info("start add_tasks")
-    try:
-        await add_tasks(tasks, message, update)
-    except Exception as e:
-        logger.error(e)
-        return str(e)
-
+    await add_tasks(tasks, message, update)
     logger.info("add_tasks done")
     return message
