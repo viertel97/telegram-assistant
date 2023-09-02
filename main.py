@@ -5,7 +5,7 @@ from telegram import Update
 from telegram.ext import Application, CallbackContext, CommandHandler, MessageHandler
 
 from handler.audio_handler import handle_audio
-from handler.command_handler import wol, separate, dump_todoist_to_monica, stretch_TPT
+from handler.command_handler import wol, separate, dump_todoist_to_monica, stretch_TPT, stretch_Articles
 from handler.document_handler import handle_document
 from handler.error_handler import handle_error
 from handler.video_handler import video_to_text
@@ -27,6 +27,7 @@ def get_command_handler():
         CommandHandler(str("book_separator"), separate),
         CommandHandler(str("dump_todoist_to_monica"), dump_todoist_to_monica),
         CommandHandler(str("stretch_tpt"), stretch_TPT),
+        CommandHandler(str("stretch_articles"), stretch_Articles)
     )
 
 
