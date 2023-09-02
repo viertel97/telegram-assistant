@@ -13,6 +13,7 @@ from quarter_lib.logging import setup_logging
 
 logger = setup_logging(__file__)
 TPT_ID = "b3042bf44bd14f40b0167764a0107c2f"
+ARTICLES_ID = "7e43eaa4b66b4dc695cd96d55be0aac2"
 
 
 def update_priority(page_id_priority):
@@ -24,8 +25,34 @@ def update_priority(page_id_priority):
         print(r.text)
     return r
 
+async def stretch_article_list(update: Update, context: CallbackContext):
+    if is_not_correct_chat_id(update.message.chat_id):
+        await update.message.reply_text("Nah")
+        return
+    await update.message.reply_text("stretching Articles", disable_notification=True)
+    df = get_database(ARTICLES_ID)
+    await update.message.reply_text("got Articles", disable_notification=True)
+    df["title"] = df["properties~Name~title"].apply(lambda x: x[0]["plain_text"])
+    df.drop(columns=["properties~Name~title"], inplace=True)
+    df = df[
+        ["id", "title", "properties~Priority~number", "properties~Not-Available~checkbox", "properties~Done~checkbox"]
+    ]
+    df.sort_values(by="properties~Priority~number", inplace=True)
+    df = df[df["properties~Not-Available~checkbox"] == False]
+    df = df[df["properties~Done~checkbox"] == False]
+    # df = df[df["properties~Priority~number"] > 0]
+    df.reset_index(drop=True, inplace=True)
+    await update.message.reply_text("filtered Articles & starting to update", disable_notification=True)
+    for index, row in df.iterrows():
+        update_priority((df.iloc[index]["id"], index + 1))
+        if (index + 1) % 10 == 0:
+            logger.info(f"updated {index + 1} rows")
+        if (index + 1) % 30 == 0:
+            await update.message.reply_text(f"updated {index + 1} rows", disable_notification=True)
+        time.sleep(1)
+    await update.message.reply_text("Done")
 
-async def stretch_TPT(update: Update, context: CallbackContext):
+async def stretch_project_tasks(update: Update, context: CallbackContext):
     if is_not_correct_chat_id(update.message.chat_id):
         await update.message.reply_text("Nah")
         return
