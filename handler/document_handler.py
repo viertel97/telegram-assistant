@@ -1,5 +1,4 @@
-import os
-
+from quarter_lib.logging import setup_logging
 from telegram import Update
 from telegram.ext import CallbackContext
 
@@ -10,10 +9,8 @@ from handler.xml_handler import handle_xml
 from handler.zip_handler import handle_zip
 from helper.config_helper import is_not_correct_chat_id
 from helper.handler_helper import prepairing_document
-from quarter_lib.logging import setup_logging
 
 logger = setup_logging(__file__)
-
 
 
 async def handle_document(update: Update, context: CallbackContext):
@@ -45,3 +42,4 @@ async def handle_document(update: Update, context: CallbackContext):
     else:
         logger.error("unsupported mime type: " + mime_type)
         await update.message.reply_text("unsupported mime type: " + mime_type)
+    await update.message.reply_text("done handle_document")

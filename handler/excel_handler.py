@@ -35,6 +35,14 @@ def handle_strong(file_path):
 
 def read_strong_excel(file_path):
     df = pd.read_csv(file_path, sep=";")
-    df = df.where(pd.notnull(df), None)
+
+    df.Weight = df.Weight.str.replace(",", ".")
+    df.Weight = df.Weight.astype(float)
+    df.RPE = df.RPE.str.replace(",", ".")
+    df.RPE = df.RPE.astype(float)
+    # df.Distance = df.Distance.str.replace(",", ".")
+    # df.Distance = df.Distance.astype(float)
+
     df = df.replace({np.nan: None})
+    df = df.where(pd.notnull(df), None)
     return df.values.tolist(), len(df["Date"].unique())

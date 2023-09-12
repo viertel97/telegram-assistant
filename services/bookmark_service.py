@@ -9,7 +9,7 @@ from telegram import Update
 
 from helper.file_helper import delete_files
 from services.logging_service import log_to_telegram
-from services.microsoft_service import get_file_from_path
+from services.microsoft_service import download_file_from_path
 from services.todoist_service import add_file_to_todoist
 from services.transcriber_service import audio_to_text
 
@@ -29,7 +29,7 @@ async def get_bookmark_transcriptions(xml_data, caption, update: Update):
     df = pd.DataFrame(xml_data)
     for file_name, group in df.groupby("fileName"):
         await log_to_telegram("start downloading and processing of file: " + file_name, logger, update)
-        get_file_from_path("Musik/Hörbücher/" + caption[11:][:-19] + "/" + file_name + ':/content', file_name)
+        download_file_from_path("Musik/Hörbücher/" + caption[11:][:-19] + "/" + file_name + ':/content', file_name)
         logger.info("downloaded file '{file_name}' - start conversion".format(file_name=file_name))
         sound = AudioSegment.from_file(file_name)
         logger.info("converted file '{file_name}' - start reading and transcriptions".format(file_name=file_name))

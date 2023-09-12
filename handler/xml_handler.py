@@ -1,26 +1,20 @@
-import os
 import uuid
 from datetime import datetime, timedelta
 from json import dumps
 
-from loguru import logger
+from quarter_lib.logging import setup_logging
 from telegram import Update
 
 from services.bookmark_service import get_bookmark_transcriptions
 from services.todoist_service import run_todoist_sync_commands
 from services.xml_service import xml_to_dict
 
-logger.add(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
-    format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
-    backtrace=True,
-    diagnose=True,
-)
+logger = setup_logging(__file__)
 
 
 async def handle_xml(file_path, file_name, update: Update):
     xml = open(file_path, "r", encoding="utf-8").read()  # Read file
-    xml_dict = xml_to_dict(xml)
+    xml_dict = await xml_to_dict(xml, update)
     transcribed_bookmarks, title, author = await get_bookmark_transcriptions(xml_dict, update.message.caption,
                                                                              update)
     now = datetime.now()
@@ -46,7 +40,7 @@ async def handle_xml(file_path, file_name, update: Update):
             "file_position": transcribed_bookmark["file_position"],
             "annotation": transcribed_bookmark["annotation"],
         }
-        desc = dumps(description_dict, indent=4, sort_keys=True, ensure_ascii=False).encode('utf8')
+        desc = dumps(description_dict, indent=4, sort_keys=True, ensure_ascii=False).encode('utf8').decode()
         generated_temp_id = "_" + str(uuid.uuid4())
         command_list.append(
             {
@@ -73,6 +67,7 @@ async def handle_xml(file_path, file_name, update: Update):
             }
         )
     sync_command_results = run_todoist_sync_commands(command_list)
+    logger.info(sync_command_results)
     message = "Transcribed {} bookmarks for {} by {}".format(
         len(transcribed_bookmarks), title, author) + " and added them to Todoist"
 
