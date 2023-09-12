@@ -1,6 +1,5 @@
 import os
 
-import pandas as pd
 import pymysql
 from loguru import logger
 from quarter_lib_old.database import close_server_connection, create_server_connection
@@ -11,21 +10,6 @@ logger.add(
     backtrace=True,
     diagnose=True,
 )
-
-
-def handle_strong(file_path):
-    logger.info("start handle_strong")
-    daily_record, unique_sessions = read_strong_excel(file_path)
-    done_message = update_strong_entries(daily_record, unique_sessions)
-    os.remove(file_path)
-    logger.info("stop handle_strong")
-    return done_message
-
-
-def read_strong_excel(file_path):
-    df = pd.read_csv(file_path, sep=";")
-    df = df.where(pd.notnull(df), None)
-    return df.values.tolist(), len(df["Date"].unique())
 
 
 def update_strong_entries(records, unique_sessions):

@@ -1,28 +1,22 @@
 import html
 import json
-import os
 import time
 import traceback
 
-from loguru import logger
+from quarter_lib.akeyless import get_secrets
+from quarter_lib.logging import setup_logging
 from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from todoist_api_python.api import TodoistAPI
 
 from helper.config_helper import CHAT_ID
-from quarter_lib.akeyless import get_secrets
 
 TODOIST_TOKEN = get_secrets("todoist/token")
 TODOIST_API = TodoistAPI(TODOIST_TOKEN)
-MAX_LENGTH_PER_MESSAGE = 4096
+MAX_LENGTH_PER_MESSAGE = 4096 - 50
 
-logger.add(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
-    format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
-    backtrace=True,
-    diagnose=True,
-)
+logger = setup_logging(__file__)
 
 
 async def handle_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:

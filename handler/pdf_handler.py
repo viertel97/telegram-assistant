@@ -9,6 +9,7 @@ from telegram import Update
 
 from helper.file_helper import delete_files
 from services.logging_service import log_to_telegram
+from services.microsoft_service import replace_file_in_onedrive
 from services.todoist_service import get_items_by_todoist_project, run_todoist_sync_commands, update_description
 
 logger = setup_logging(__file__)
@@ -99,6 +100,12 @@ async def handle_pdf(file_path, file_name, update: Update):
                                                 file_name))
         response = run_todoist_sync_commands(command_list)
         await log_to_telegram("synced todoist with response '{}'".format(response), logger, update)
+
+        onedrive_path = splitted_caption[2].strip().replace("\\", "/")
+        replace_file_in_onedrive(onedrive_path, new_file_path)
+
+        await log_to_telegram("replaced file in onedrive '{}'".format(onedrive_path), logger, update)
+
         to_delete.append(file_path)
         to_delete.append(new_file_path)
     else:

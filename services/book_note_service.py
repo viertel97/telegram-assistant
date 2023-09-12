@@ -64,7 +64,7 @@ def paragraph_to_task(paragraph, title, comment=None):
             text += "[{text}]({link})".format(text=child.text, link=child["href"])
     text = "{text} - {title} - {trigger}".format(text=text, title=title, trigger=OBSIDIAN_AUTOSTART_TRIGGER)
     if comment:
-        return (text, comment)
+        return text, comment
     else:
         return text
 
@@ -78,7 +78,7 @@ def get_smallest_project():
 
 
 def split_str_to_chars(text, chars=2047):
-    return [text[i : i + chars] for i in range(0, len(text), chars)][0]
+    return [text[i: i + chars] for i in range(0, len(text), chars)][0]
 
 
 async def add_tasks(tasks, message, update):
@@ -89,11 +89,12 @@ async def add_tasks(tasks, message, update):
         command_list = []
         for task in tasks:
             if type(task) == tuple:
-                task[0] = split_str_to_chars(task[0])
+                temp_task = list(task)
+                temp_task[0] = split_str_to_chars(temp_task[0])
                 command_list.append(
                     {
                         "type": "item_add",
-                        "args": {"content": task[0], "description": task[1], "project_id": project_id},
+                        "args": {"content": temp_task[0], "description": temp_task[1], "project_id": project_id},
                     }
                 )
             else:
@@ -109,6 +110,7 @@ async def add_tasks(tasks, message, update):
                 logger.error("response body {body}".format(body=response.text))
             else:
                 logger.info("response:\n{response}".format(response=response.json()))
+                await log_to_telegram("Added {len} tasks".format(len=len(chunk)), logger, update)
             if len(chunk) == NUMBER_OF_ITEMS_PER_CHUNK:
                 logger.info("sleeping for 10 seconds")
                 time.sleep(10)
@@ -118,6 +120,7 @@ async def add_tasks(tasks, message, update):
         )
         await log_to_telegram(error_message, logger, update)
         raise Exception(error_message)
+
 
 def chunks(lst, n):
     for i in range(0, len(lst), n):
