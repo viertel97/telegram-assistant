@@ -66,7 +66,12 @@ async def handle_xml(file_path, file_name, update: Update):
                          }
             }
         )
+
+    command_list = [command for command in command_list if command["type"] != "note_add"]
     sync_command_results = run_todoist_sync_commands(command_list)
+    if sync_command_results.status_code != 200:
+        logger.error("Error while adding to Todoist")
+        raise Exception("Error while adding to Todoist " + sync_command_results.text)
     logger.info(sync_command_results)
     message = "Transcribed {} bookmarks for {} by {}".format(
         len(transcribed_bookmarks), title, author) + " and added them to Todoist"
