@@ -98,8 +98,14 @@ async def handle_pdf(file_path, file_name, update: Update):
                                             caption="'{}' out of possible '{}' could not have been added - therefore '{}' annotations has been added sucecessfully to the PDF '{}'.".format(
                                                 not_found_counter, group.shape[0], group.shape[0] - not_found_counter,
                                                 file_name))
-        response = run_todoist_sync_commands(command_list)
-        await log_to_telegram("synced todoist with response '{}'".format(response), logger, update)
+        response_list = []
+        for command in command_list:
+            response_list.append(run_todoist_sync_commands([command]))
+        # if any of the responses status code is not 200
+        if any([response.status_code != 200 for response in response_list]):
+            await log_to_telegram("Error while syncing todoist", logger, update)
+        else:
+            await log_to_telegram("synced todoist with positive response", logger, update)
 
         onedrive_path = splitted_caption[2].strip().replace("\\", "/")
         replace_file_in_onedrive(onedrive_path, new_file_path)

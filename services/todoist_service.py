@@ -20,8 +20,8 @@ TODOIST_API = TodoistAPI(TODOIST_TOKEN)
 def run_todoist_sync_commands(commands):
     for command in commands:
         command["uuid"] = str(uuid.uuid4())
-        if not command.get("temp_id"):
-            command["temp_id"] = (str(uuid.uuid4()),)
+    #    if not command.get("temp_id"):
+    #        command["temp_id"] = (str(uuid.uuid4()),)
     return run_sync_commands(commands)
 
 
