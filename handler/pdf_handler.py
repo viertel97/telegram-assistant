@@ -55,6 +55,7 @@ async def handle_pdf(file_path, file_name, update: Update):
             file_version = int(re.search(r"V[0-9]{1,2}", file_name).group(0)[1:])
         except AttributeError:
             file_version = 1
+        id_list = []
         command_list = []
         for _, task in group.iterrows():
             text_to_search = task["recognized_text_" + selected_language]
@@ -68,6 +69,7 @@ async def handle_pdf(file_path, file_name, update: Update):
                     try:
                         content = await add_annotation_to_finding(filtered_findings, task, text_to_search)
                         command_list.append({"type": "item_close", "args": {"id": task.id}})
+                        id_list.append(task.id)
                         await log_to_telegram(
                             f"added '{content}' to page numbers '{page_numbers}' for '{len(filtered_findings)}' filtered findings",
                             logger, update)
@@ -98,11 +100,14 @@ async def handle_pdf(file_path, file_name, update: Update):
                                             caption="'{}' out of possible '{}' could not have been added - therefore '{}' annotations has been added sucecessfully to the PDF '{}'.".format(
                                                 not_found_counter, group.shape[0], group.shape[0] - not_found_counter,
                                                 file_name))
-        response_list = []
-        for command in command_list:
-            response_list.append(run_todoist_sync_commands([command]))
+        command = {"type": "item_complete", "args": {"ids": id_list}}
+        response = run_todoist_sync_commands([command])
+        #response_list = []
+        #for command in command_list:
+        #    response_list.append(run_todoist_sync_commands([command]))
         # if any of the responses status code is not 200
-        if any([response.status_code != 200 for response in response_list]):
+        #if any([response.status_code != 200 for response in response_list]):
+        if response.status_code != 200:
             await log_to_telegram("Error while syncing todoist", logger, update)
         else:
             await log_to_telegram("synced todoist with positive response", logger, update)
