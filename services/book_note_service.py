@@ -10,7 +10,7 @@ from services.logging_service import log_to_telegram
 from services.todoist_service import run_todoist_sync_commands, get_items_by_todoist_project
 
 logger = setup_logging(__file__)
-PROJECT_IDS_URL = "https://viertel-it.de/files/rework_project_ids.json"
+PROJECT_IDS_URL = "https://984979.server57.adminflex.de/viertel-it.de/files/rework_project_ids.json"
 
 OBSIDIAN_AUTOSTART_TRIGGER = "Obsidian-Eintrag überdenken"
 
