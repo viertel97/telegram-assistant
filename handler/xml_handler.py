@@ -1,5 +1,4 @@
 import uuid
-from datetime import datetime, timedelta
 from json import dumps
 
 from quarter_lib.logging import setup_logging
@@ -17,10 +16,7 @@ async def handle_xml(file_path, file_name, update: Update):
     xml_dict = await xml_to_dict(xml, update)
     transcribed_bookmarks, title, author = await get_bookmark_transcriptions(xml_dict, update.message.caption,
                                                                              update)
-    now = datetime.now()
-
     command_list = []
-    due_date = (now + timedelta(days=1)).strftime("%Y-%m-%d")
     for transcribed_bookmark in transcribed_bookmarks:
         content = transcribed_bookmark["title"] + " - add highlight to Zotero"
 
@@ -48,7 +44,7 @@ async def handle_xml(file_path, file_name, update: Update):
                 "temp_id": generated_temp_id,
                 "args": {"content": content, "description": desc,
                          "project_id": "2281154095",
-                         "due": {'date': due_date}},
+                         },
             }
         )
         command_list.append(
@@ -67,7 +63,6 @@ async def handle_xml(file_path, file_name, update: Update):
             }
         )
 
-    command_list = [command for command in command_list if command["type"] != "note_add"]
     sync_command_results = run_todoist_sync_commands(command_list)
     if sync_command_results.status_code != 200:
         logger.error("Error while adding to Todoist")

@@ -50,7 +50,7 @@ async def get_bookmark_transcriptions(xml_data, caption, update: Update):
             await update.message.reply_document(open(temp_file_name, "rb"), caption=temp_file_name,
                                                 disable_notification=True)
             upload_result = await add_file_to_todoist(temp_file_name)
-
+            logger.info("uploaded file '{file_name}' to todoist".format(file_name=temp_file_name))
             r_file = sr.AudioFile(temp_file_name)
             with r_file as source:
                 audio = r.record(source)
