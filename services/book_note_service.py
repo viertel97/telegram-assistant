@@ -108,6 +108,7 @@ async def add_tasks(tasks, message, update):
             logger.info("response code {code}".format(code=response.status_code))
             if response.status_code != 200:
                 logger.error("response body {body}".format(body=response.text))
+                raise Exception("Error while adding to Todoist " + response.text)
             else:
                 logger.info("response:\n{response}".format(response=response.json()))
                 await log_to_telegram("Added {len} tasks".format(len=len(chunk)), logger, update)
