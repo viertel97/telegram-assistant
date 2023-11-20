@@ -98,7 +98,7 @@ def audio_to_text(audio):
     recognized_alternatives_en = r.recognize_google(audio, language="en-US", show_all=True)
     recognized_text_de = {'transcript': "", 'confidence': 0} if type(recognized_alternatives_de) is list else \
         recognized_alternatives_de['alternative'][0]
-    recognized_text_en = {'transcript': "", 'confidence': 0} if recognized_alternatives_en is None else \
+    recognized_text_en = {'transcript': "", 'confidence': 0} if type(recognized_alternatives_en) is list else \
         recognized_alternatives_en['alternative'][0]
     return recognized_text_de, recognized_text_en
 
