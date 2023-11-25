@@ -49,15 +49,11 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           livenessProbe:
-            httpGet:
-              path: /
-              port: 9100
-            initialDelaySeconds: 60
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 9100
-            initialDelaySeconds: 60
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - ps aux | grep main.py | grep -v grep
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
