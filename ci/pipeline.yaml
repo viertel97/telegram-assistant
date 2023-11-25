@@ -1,0 +1,12 @@
+name: $(Date:yyyyMMdd)-$(Build.BuildId)
+
+trigger:
+- main
+
+resources:
+- repo: self
+
+extends:
+  template: pipeline-template.yaml
+  parameters:
+      repository: "telegram-assistant"
