@@ -7,7 +7,6 @@ parameters:
 - name: repository # name of the parameter; required
   type: string # data type of the parameter; required
 
-
 stages:
 - stage: Docker
   displayName: Build and Push Docker Image
@@ -19,8 +18,15 @@ stages:
     steps:
     - task: Docker@2
       inputs:
-        containerRegistry: 'GHCR'  # The name of your Azure Container Registry
-        repository: 'viertel97/${{ parameters.repository }}'  # The name of the repository
-        command: 'buildAndPush'
-        Dockerfile: '**/Dockerfile'
-        tags: latest,$(Build.BuildNumber)
+        containerRegistry: 'GHCR'
+        command: 'login'
+      displayName: 'Login to GHCR'
+    - script: |
+        # Install buildx
+        docker buildx create --use
+        docker buildx inspect --bootstrap
+  
+        # Build and push multi-platform Docker image
+        docker buildx build --push --platform linux/arm64,linux/amd64 -t ghcr.io/viertel97/${{parameters.repository}}:latest -f Dockerfile .
+        docker buildx stop
+      displayName: 'Build and Push Multi-Platform Docker Image'
