@@ -2,6 +2,7 @@ name: $(Date:yyyyMMdd)-$(Build.BuildId)
 
 trigger:
 - main
+- master
 
 resources:
 - repo: self
