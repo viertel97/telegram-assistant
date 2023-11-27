@@ -2,14 +2,14 @@
 apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "cd.fullname" . }}
+  name: {{ include "telegram-assistant.fullname" . }}
   labels:
-    {{- include "cd.labels" . | nindent 4 }}
+    {{- include "telegram-assistant.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "cd.fullname" . }}
+    name: {{ include "telegram-assistant.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:
