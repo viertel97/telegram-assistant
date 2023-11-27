@@ -44,10 +44,6 @@ spec:
                 secretKeyRef:
                   name: akeyless-secret
                   key: access_key
-          ports:
-            - name: http
-              containerPort: {{ .Values.service.port }}
-              protocol: TCP
           livenessProbe:
             exec:
               command:
