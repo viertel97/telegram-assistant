@@ -27,6 +27,6 @@ stages:
         docker buildx inspect --bootstrap
   
         # Build and push multi-platform Docker image
-        docker buildx build --push --platform linux/arm64,linux/amd64 -t ghcr.io/viertel97/${{parameters.repository}}:latest -f Dockerfile .
+        docker buildx build --build-arg PAT=${PAT} --push --platform linux/arm64,linux/amd64 -t ghcr.io/viertel97/${{parameters.repository}}:latest -f Dockerfile .
         docker buildx stop
       displayName: 'Build and Push Multi-Platform Docker Image'
