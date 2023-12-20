@@ -5,7 +5,7 @@ from telegram import Update
 from telegram.ext import Application, CallbackContext, CommandHandler, MessageHandler
 
 from handler.audio_handler import handle_audio
-from handler.command_handler import wol, dump_todoist_to_monica
+from handler.command_handler import wol, dump_todoist_to_monica, toggle_cloudflare_ips
 from handler.document_handler import handle_document
 from handler.error_handler import handle_error
 from handler.video_handler import video_to_text
@@ -25,6 +25,7 @@ def get_command_handler():
         CommandHandler(str("start"), start),
         CommandHandler(str("wol"), wol),
         CommandHandler(str("dump_todoist_to_monica"), dump_todoist_to_monica),
+        CommandHandler(str("toggle_cloudflare_ips"), toggle_cloudflare_ips),
     )
 
 
