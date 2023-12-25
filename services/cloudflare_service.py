@@ -32,7 +32,7 @@ async def toggle_ips(update: Update, context: CallbackContext):
     else:
         await log_to_telegram(f"switch from private_ip to non_private_ip", logger, update)
         selected_ip = HOSTED_ID
-        proxied = True
+        proxied = False
 
     for dns_entry in current_dns_entries:
         temp = requests.put(
