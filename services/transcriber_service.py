@@ -108,13 +108,13 @@ async def transcribe_voice(update: Update, context: CallbackContext):
         await update.message.reply_text("Nah")
         return
     logger.info("start: Voice to text")
-    file_name = (
-            str(update.message.chat_id) + "_" + str(update.message.from_user.id) + str(
-        update.message.message_id) + ".ogg"
-    )
+    # file_name = (
+    #         str(update.message.chat_id) + "_" + str(update.message.from_user.id) + str(
+    #     update.message.message_id) + ".ogg"
+    # )
     file_id = update.message.voice.file_id
     file = await context.bot.get_file(file_id)
-    file_path = os.path.join(sys.path[0], file_name)
+    file_path = os.path.join(sys.path[0], "voice.ogg")
     await file.download(file_path)
     print(file_path)
 
