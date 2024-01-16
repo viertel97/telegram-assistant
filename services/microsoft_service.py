@@ -92,13 +92,16 @@ def create_backup(path, access_token):
     folder_path = os.path.dirname(path)
     logger.info("folder path: " + folder_path)
     file_list, destination_folder_id = get_file_list(folder_path, access_token)
+    logger.info("file list: " + str(file_list))
     for file in file_list['value']:
         if file['name'] == os.path.basename(path):
             file_id = file['id']
             break
-    if not file_id:
+    # check if variable file_id is set
+    if 'file_id' not in locals():
         raise Exception("File not found")
     copy_result = copy_file(file_id, os.path.basename(path), access_token)
+    logger.info("copy result: " + str(copy_result.json()))
     return destination_folder_id
 
 
