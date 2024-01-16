@@ -102,11 +102,12 @@ async def handle_pdf(file_path, file_name, update: Update):
                                                 file_name))
         command = {"type": "item_complete", "args": {"ids": id_list}}
         response = run_todoist_sync_commands([command])
-        #response_list = []
-        #for command in command_list:
+        # response_list = []
+        # for command in command_list:
         #    response_list.append(run_todoist_sync_commands([command]))
         # if any of the responses status code is not 200
-        #if any([response.status_code != 200 for response in response_list]):
+        # if any([response.status_code != 200 for response in response_list]):
+        logger.info("run_todoist_sync_commands response: {}".format(response))
         if response.status_code != 200:
             await log_to_telegram("Error while syncing todoist", logger, update)
         else:
