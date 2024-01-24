@@ -1,28 +1,17 @@
 import time
 
 import markdown
-import requests
 from bs4 import BeautifulSoup
 from quarter_lib.logging import setup_logging
 
-from helper.caching import ttl_cache
 from services.logging_service import log_to_telegram
-from services.todoist_service import run_todoist_sync_commands, get_items_by_todoist_project
+from services.todoist_service import run_todoist_sync_commands, get_items_by_todoist_project, get_rework_projects
 
 logger = setup_logging(__file__)
-PROJECT_IDS_URL = "https://984979.server57.adminflex.de/viertel-it.de/files/rework_project_ids.json"
 
 OBSIDIAN_AUTOSTART_TRIGGER = "Obsidian-Eintrag überdenken"
 
 NUMBER_OF_ITEMS_PER_CHUNK = 40
-
-
-@ttl_cache(ttl=60 * 60)
-def get_ids_from_web():
-    logger.info("getting ids from web")
-    response = requests.get(PROJECT_IDS_URL, headers={'User-Agent': 'Mozilla/5.0'}, verify=False)
-    data = response.json()
-    return data
 
 
 def read_markdown(file_path):
@@ -70,11 +59,11 @@ def paragraph_to_task(paragraph, title, comment=None):
 
 
 def get_smallest_project():
-    project_ids = get_ids_from_web()
-    project_sizes = [len(get_items_by_todoist_project(project_id)) for project_id in project_ids]
+    rework_projects = get_rework_projects()
+    project_sizes = [len(get_items_by_todoist_project(project.id)) for project in rework_projects]
     min_size = min(project_sizes)
     idx = project_sizes.index(min_size)
-    return project_ids[idx], min_size, idx
+    return rework_projects[idx], min_size, idx
 
 
 def split_str_to_chars(text, chars=2047):
@@ -82,9 +71,9 @@ def split_str_to_chars(text, chars=2047):
 
 
 async def add_tasks(tasks, message, update):
-    project_id, min_size, idx = get_smallest_project()
+    project, min_size, idx = get_smallest_project()
     await log_to_telegram("List {idx} ({project_id}) was chosen as the smallest project with {min_size} items".format(
-        idx=idx + 1, project_id=project_id, min_size=min_size), logger, update)
+        idx=idx + 1, project_id=project.id, min_size=min_size), logger, update)
     if min_size + len(tasks) <= 300:
         command_list = []
         for task in tasks:
@@ -94,12 +83,12 @@ async def add_tasks(tasks, message, update):
                 command_list.append(
                     {
                         "type": "item_add",
-                        "args": {"content": temp_task[0], "description": temp_task[1], "project_id": project_id},
+                        "args": {"content": temp_task[0], "description": temp_task[1], "project_id": project.id},
                     }
                 )
             else:
                 task = split_str_to_chars(task)
-                command_list.append({"type": "item_add", "args": {"content": task, "project_id": project_id}})
+                command_list.append({"type": "item_add", "args": {"content": task, "project_id": project.id}})
         logger.info("adding batch of {len} tasks".format(len=len(command_list)))
         chunks_of_40 = list(chunks(command_list, NUMBER_OF_ITEMS_PER_CHUNK))
         for chunk in chunks_of_40:
@@ -117,7 +106,7 @@ async def add_tasks(tasks, message, update):
                 time.sleep(10)
     else:
         error_message = "Project {project_id} is full and cannot handle {len} more tasks".format(
-            project_id=project_id, len=len(tasks)
+            project_id=project.id, len=len(tasks)
         )
         await log_to_telegram(error_message, logger, update)
         raise Exception(error_message)
