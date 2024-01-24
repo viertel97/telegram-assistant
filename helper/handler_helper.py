@@ -12,7 +12,8 @@ async def prepairing_document(update: Update, context: CallbackContext):
     file_id = update.message.document.file_id
     file = await context.bot.get_file(file_id)
     file_name = update.message.document.file_name
-    file_path = os.path.join(sys.path[0], "document.xml")
+    file_extension = file_name.split(".")[-1]
+    file_path = os.path.join(sys.path[0], "file." + file_extension)
     try:
         os.remove(file_path)
     except FileNotFoundError:
