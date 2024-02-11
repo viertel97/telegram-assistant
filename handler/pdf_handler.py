@@ -63,7 +63,7 @@ async def handle_pdf(file_path, file_name, update: Update):
             split_search_text = text_to_search.split(" ")
             findings = search_for_text_in_document(document, split_search_text)
             logger.info(f"found '{len(findings)}' entries for '{text_to_search}'")
-            if len(findings):
+            if len(findings) and not text_to_search == "" and not text_to_search == " ":
                 filtered_findings, page_numbers = get_filtered_findings(findings)
                 if filtered_findings:
                     try:
@@ -100,23 +100,13 @@ async def handle_pdf(file_path, file_name, update: Update):
                                             caption="'{}' out of possible '{}' could not have been added - therefore '{}' annotations has been added sucecessfully to the PDF '{}'.".format(
                                                 not_found_counter, group.shape[0], group.shape[0] - not_found_counter,
                                                 file_name))
-        command = {"type": "item_complete", "args": {"ids": id_list}}
-        response = run_todoist_sync_commands([command])
-        # response_list = []
-        # for command in command_list:
-        #    response_list.append(run_todoist_sync_commands([command]))
-        # if any of the responses status code is not 200
-        # if any([response.status_code != 200 for response in response_list]):
+        response = run_todoist_sync_commands(command_list)
+
         logger.info("run_todoist_sync_commands response: {}".format(response))
         if response.status_code != 200:
             await log_to_telegram("Error while syncing todoist", logger, update)
         else:
             await log_to_telegram("synced todoist with positive response", logger, update)
-
-        onedrive_path = splitted_caption[2].strip().replace("\\", "/")
-        replace_file_in_onedrive(onedrive_path, new_file_path)
-
-        await log_to_telegram("replaced file in onedrive '{}'".format(onedrive_path), logger, update)
 
         to_delete.append(file_path)
         to_delete.append(new_file_path)

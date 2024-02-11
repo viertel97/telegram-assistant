@@ -23,10 +23,6 @@ def run_todoist_sync_commands(commands):
         if not command.get("temp_id"):
            command["temp_id"] = str(uuid.uuid4())
     return run_sync_commands(commands)
-    result_list = []
-    for command in commands:
-        result_list.append(run_sync_commands([command]))
-    return result_list
 
 
 def add_to_todoist(text, project_id=None):
