@@ -119,9 +119,10 @@ async def add_annotation_to_finding(filtered_findings, task, text_to_search):
     inst = get_rect(filtered_findings)
     highlight = filtered_findings[0]['page'].add_highlight_annot(inst)
     if task.annotation:
-        content = "task_annotation: " + task.annotation + "\n" + "text_to_search: " + text_to_search
+        content = f"timestamp: {task.recording_timestamp}\ntask_annotation: {task.annotation}\ntext_to_search: {text_to_search}"
     else:
-        content = "text_to_search: " + text_to_search
+        content = f"timestamp: {task.recording_timestamp}\ntext_to_search: {text_to_search}"
+
     highlight.set_info({"content": content})
     highlight.update()
     return content
