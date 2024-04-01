@@ -20,7 +20,7 @@ def update_sleep_entries(records):
     not_added = []
     logger.info("start update_sleep_entries")
     connection = create_server_connection()
-    sql = """INSERT INTO `sleep_as_android` (`id`, `tz`, `sleep_from`,`sleep_to`, `sched`,`hours`,`rating`,`comment`,`snore`,`noise`,`cycles`,`deepsleep`,`lenadjust`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+    sql = """INSERT INTO `sleep_as_android_new` (`id`, `tz`, `sleep_from`,`sleep_to`, `sched`,`hours`,`rating`,`comment`,`snore`,`noise`,`cycles`,`deepsleep`,`lenadjust`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
     for record in records:
         try:
             with connection.cursor() as cursor:
