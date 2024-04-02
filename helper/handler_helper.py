@@ -4,7 +4,6 @@ import sys
 from quarter_lib.logging import setup_logging
 from telegram import Update
 from telegram.ext import CallbackContext
-from telegram._files.file import File
 logger = setup_logging(__file__)
 
 

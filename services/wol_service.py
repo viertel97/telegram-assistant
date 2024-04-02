@@ -16,7 +16,7 @@ async def start_pc_via_wol(update: Update, context: CallbackContext):
         return
     start_without_monitors = not (context.args[0] == 'False') if context.args else True
 
-    requests.post("http://192.168.178.100:8123/api/webhook/" + WOL_WEBHOOK)
+    requests.post("http://192.168.178.110:8123/api/webhook/" + WOL_WEBHOOK)
     if start_without_monitors:
         requests.post("http://tasker-proxy.custom.svc.cluster.local:9000/wol/status")
         await update.message.reply_text("PC started without monitors")

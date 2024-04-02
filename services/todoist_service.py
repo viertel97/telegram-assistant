@@ -23,10 +23,6 @@ def run_todoist_sync_commands(commands):
         if not command.get("temp_id"):
            command["temp_id"] = str(uuid.uuid4())
     return run_sync_commands(commands)
-    result_list = []
-    for command in commands:
-        result_list.append(run_sync_commands([command]))
-    return result_list
 
 
 def add_to_todoist(text, project_id=None):
@@ -83,3 +79,11 @@ def update_content(task_id, content):
 
 async def update_description(task_id, description):
     return TODOIST_API.update_task(task_id, description=description)
+
+def get_rework_projects():
+    projects = TODOIST_API.get_projects()
+    rework_projects = []
+    for project in projects:
+        if project.name.startswith("Book-Rework"):
+            rework_projects.append(project)
+    return rework_projects
