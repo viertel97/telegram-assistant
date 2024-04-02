@@ -112,6 +112,7 @@ async def handle_pdf(file_path, file_name, update: Update):
             await log_to_telegram("Error while syncing todoist", logger, update)
         else:
             await log_to_telegram("synced todoist with positive response", logger, update)
+            logger.info(response)
 
         onedrive_path = splitted_caption[2].strip().replace("\\", "/")
         replace_file_in_onedrive(onedrive_path, new_file_path)
