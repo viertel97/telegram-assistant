@@ -151,8 +151,8 @@ def filter_data(days):
     filtered_dates["rework-comments"] = ""
 
     for index, row in filtered_dates.iterrows():
-        filtered_dates.at[index, "comments"] = " | ".join(row["comments"]) if row["comments"] is not None else ""
-        filtered_dates.at[index, "labels"] = " | ".join(row["labels"]) if row["labels"] is not None else ""
+        filtered_dates.at[index, "comments"] = " / ".join(row["comments"]) if row["comments"] is not None else ""
+        filtered_dates.at[index, "labels"] = " / ".join(row["labels"]) if row["labels"] is not None else ""
 
         content = row["content"]
         if re.match(VOICE_RECORDER_MATCH, content):
