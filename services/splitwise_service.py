@@ -41,9 +41,16 @@ async def add_placeholder_to_splitwise(update: Update, context: CallbackContext)
     if is_not_correct_chat_id(update.message.chat_id):
         await update.message.reply_text("Nah")
         return
-    arguments = process_arguments(context.args)
-    group_name = arguments[0]
-    number_of_placeholder = int(arguments[1])
+    if len(context.args) < 2:
+        arguments = process_arguments(context.args)
+        group_name = arguments[0]
+        number_of_placeholder = int(arguments[1])
+    elif len(context.args) == 2:
+        group_name = context.args[0]
+        number_of_placeholder = int(context.args[1])
+    else:
+        await update.message.reply_text("Invalid number of arguments")
+        return
     response = requests.post(
         "http://splitwise-service.custom.svc.cluster.local:80/add_placeholder_to_group",
         json={"group_name": group_name, "number_of_placeholder": number_of_placeholder},
