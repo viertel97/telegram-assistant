@@ -42,7 +42,7 @@ async def add_placeholder_to_splitwise(update: Update, context: CallbackContext)
     group_name = arguments[0]
     number_of_placeholder = int(arguments[1])
     response = requests.post(
-        "splitwise-service.custom.svc.cluster.local:80/add_placeholder_to_group",
+        "http://splitwise-service.custom.svc.cluster.local:80/add_placeholder_to_group",
         json={"group_name": group_name, "number_of_placeholder": number_of_placeholder},
     )
     if response.status_code == 200:
