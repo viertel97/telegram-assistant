@@ -1,5 +1,6 @@
 import telegram.ext.filters as filters
 from quarter_lib.logging import setup_logging
+from quarter_lib.akeyless import get_secrets
 from telegram import Update
 from telegram.ext import Application, CallbackContext, CommandHandler, MessageHandler
 
