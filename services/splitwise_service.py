@@ -46,8 +46,8 @@ async def add_placeholder_to_splitwise(update: Update, context: CallbackContext)
         group_name = arguments[0]
         number_of_placeholder = int(arguments[1])
     elif len(context.args) == 2:
-        group_name = context.args[0]
-        number_of_placeholder = int(context.args[1])
+        group_name = context.args[0].replace('"', '').strip()
+        number_of_placeholder = int(context.args[1].strip())
     else:
         await update.message.reply_text("Invalid number of arguments")
         return
