@@ -15,6 +15,7 @@ from todoist_api_python.headers import create_headers
 
 from helper.config_helper import is_not_correct_chat_id
 from services.github_service import add_todoist_dump_to_github
+from services.mermaid_service import create_mermaid_timeline
 from services.monica_service import add_todoist_dump_to_monica
 from services.todoist_service import TODOIST_API, get_default_offset_including_check
 
@@ -41,9 +42,14 @@ async def dump_todoist_to_monica(update: Update, context: CallbackContext):
         return
     logger.info("starting Todoist dump to Monica")
     days_to_dump = int(context.args[0]) if context.args else 3
-    data, (content, public_content) = get_grabber_data(days_to_dump)
+    data, (content, public_content), raw = get_grabber_data(days_to_dump)
+    try:
+        graph = create_mermaid_timeline(raw)
+    except Exception as e:
+        logger.error(e)
+        graph = None
     timestamp = add_todoist_dump_to_monica(data)
-    add_todoist_dump_to_github(data)
+    add_todoist_dump_to_github(data, graph)
     await update.message.reply_text("Dump was done at {timestamp}".format(timestamp=timestamp))
     await return_content(content, "All Content", update)
     await return_content(public_content, "Public Content", update)
@@ -233,7 +239,7 @@ def format_md(data):
 def get_grabber_data(days_to_dump):
     data = filter_data(days_to_dump)
     data.drop("id", axis=1, inplace=True)
-    return format_md(data), (get_content(data), get_content(data, "public"))
+    return format_md(data), (get_content(data), get_content(data, "public")), data
 
 
 def get_content(data, filter_by=None):
