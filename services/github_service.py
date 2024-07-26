@@ -10,11 +10,15 @@ github_token = get_secrets(
 g = Github(github_token)
 
 
-def add_todoist_dump_to_github(data):
+def add_todoist_dump_to_github(data, graph):
     metadata = "---\n---\n\n"
     today = datetime.today().strftime("%Y-%m-%d")
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     file_content = generate_file_content(f"Todoist-Dump {timestamp} ", data)
+    
+    if graph:
+        file_content = file_content + "\n\n```mermaid\n" + graph + "```\n\n"
+    
     repo = g.get_repo("viertel97/obsidian")
 
     repo.create_file(path="0300_Spaces/Social Circle/Todoist-Dumps/" + today + ".md",
