@@ -30,7 +30,7 @@ def create_mermaid_timeline(df):
     for date_hour, group in grouped:
         graph_str += "\tsection " + str(date_hour.date()) + " " + str(date_hour.hour) + "\n".replace(":",".")
         for index, row in group.iterrows():
-            content = row['content']
+            content = row['content'].replace("\n", " ").replace(":",";")
             if pd.notnull(content) and content != "":
                 date_added = str(row['date_added']).replace(":", ".") if 'date_added' in row and pd.notnull(
                     row['date_added']) else str(date_hour).replace(":", ".")
