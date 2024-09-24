@@ -14,3 +14,4 @@ msal==1.20.0
 PyMuPDF==1.21.1
 PyGithub==1.58.2
 quarter_lib==0.0.22
+gradio_client

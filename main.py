@@ -8,6 +8,7 @@ from handler.audio_handler import handle_audio
 from handler.command_handler import wol, dump_todoist_to_monica, toggle_cloudflare_ips, add_splitwise_placeholder
 from handler.document_handler import handle_document
 from handler.error_handler import handle_error
+from handler.text_handler import handle_text
 from handler.video_handler import video_to_text
 from handler.voice_handler import voice_to_text
 
@@ -36,6 +37,7 @@ def get_message_handler():
         MessageHandler(filters.VIDEO, video_to_text),
         MessageHandler(filters.Document.ALL, handle_document),
         MessageHandler(filters.AUDIO, handle_audio),
+        MessageHandler(filters.TEXT, handle_text),
     )
 
 
