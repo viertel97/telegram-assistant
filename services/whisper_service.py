@@ -1,52 +1,131 @@
-from pydub import AudioSegment
 import os
+import time
+
 from gradio_client import handle_file, Client
+from pydub import AudioSegment
+from quarter_lib.logging import setup_logging
 from telegram import Update
 
-client = Client("http://localhost:8000")
+logger = setup_logging(__file__)
+
+# Try to connect to the primary server, and fallback to localhost if needed
+try:
+    client = Client("http://faster-whisper-server.default.svc.cluster.local:8000")
+except Exception:
+    client = Client("http://localhost:8000")
 
 
-# Function to split the audio into 10-second segments
-def split_audio(audio_file):
+# Helper function to convert milliseconds to (hours:minutes:seconds)
+def millis_to_time_format(ms):
+    hours, remainder = divmod(ms // 1000, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
+
+
+async def split_and_process_audio(audio_file, seconds: float, overlap_seconds: float, filename: str, update: Update):
     audio = AudioSegment.from_wav(audio_file.name)
-    segment_length = 15 * 1000  # 10 seconds in milliseconds
-    segments = []
+    segment_length = int(seconds * 1000)  # Convert seconds to milliseconds
+    overlap_length = int(overlap_seconds * 1000)  # Convert overlap seconds to milliseconds
+    transcription = ""
+    to_delete = []
+    segment_counter = 1  # Counter for naming segments
 
-    for i in range(0, len(audio), segment_length):
-        segment = audio[i:i + segment_length]
-        segment_name = f"segment_{i // segment_length}.wav"
+    # Start the segment loop with overlap in both directions
+    start = 0
+    while start < len(audio):
+        start_step = start - overlap_length
+        if start_step < 0:
+            start_step = 0
+        end = min(start + segment_length + overlap_length, len(audio))  # Ensure not to exceed file length
+        segment = audio[start_step: end]
+
+        # Adjusted segment naming to be "Seg1:", "Seg2:", etc.
+        segment_name = f"segment_{segment_counter}.wav"
         segment.export(segment_name, format="wav")
-        segments.append(segment_name)
 
-    return segments
+        # Get start and end time in (hours:minutes:seconds)
+        start_time = millis_to_time_format(start_step)
+        end_time = millis_to_time_format(end)
+
+        # Update caption with the desired format
+        caption_text = f"Start: {start_time}\nEnd: {end_time}"
+        await update.message.reply_audio(open(segment_name, "rb"), disable_notification=True, caption=caption_text)
+
+        transcribed_text = ""  # transcribe_segment(segment_name)
+
+        if transcribed_text is not None:
+            logger.info(f"Transcription for {segment_name}: {transcribed_text}")
+            await update.message.reply_text(f"Transcription for '{segment_name}': \n{transcribed_text}",
+                                            disable_notification=True)
+            transcription += transcribed_text + " "
+        else:
+            await update.message.reply_text(f"Error transcribing {segment_name}.")
+
+        to_delete.append(segment_name)
+
+        # Move to the next segment, starting slightly before the current segment ends (with overlap)
+        start += segment_length
+        segment_counter += 1  # Increment segment counter for each new segment
+
+    # Clean up all exported files after transcription
+    for file in to_delete:
+        try:
+            os.remove(file)
+        except Exception as e:
+            logger.error(f"Error deleting file: {e}")
+
+    return transcription.strip()
 
 
 # Function to call the transcription API for each audio segment
-def transcribe_segment(segment_file, update:Update):
+def transcribe_segment(segment_file):
+    counter = 0
     try:
-        response = client.predict(handle_file(segment_file), model="bofenghuang/whisper-large-v2-cv11-german-ct2",
-                                  task="transcribe",
-                                  temperature=0,
-                                  stream=True,
-                                  api_name="/predict"
-                                  )
-    except Exception:
-        print("Error")
-        response = ""
-    return response
+        job = client.submit(
+            handle_file(segment_file),
+            model="bofenghuang/whisper-large-v2-cv11-german-ct2",
+            task="transcribe",
+            temperature=0,
+            stream=True,
+            api_name="/predict",
+        )
+        # Add counter to log only every 5 seconds
+        while not job.done():
+            time.sleep(1)
+            counter += 1
+            if counter % 5 == 0:
+                logger.info(f"Status: {job.status()}")
+        response = job.result()
+        return response
+    except Exception as e:
+        logger.error(f"Error transcribing segment: {e}")
+        return ""
 
 
-# Function to handle the entire transcription process
-def transcribe(audio_file, update):
-    segments = split_audio(audio_file)  # Split into 10s segments
-    transcription = ""
+async def transcribe(audio_file, filename: str, update: Update):
+    # Main function to handle the transcription process with retry logic
+    # Define segment lengths in seconds (converted from minutes) and overlap
+    segment_length = 60  # 1-minute segment
+    overlap_seconds = 5  # Define overlap (e.g., 5 seconds)
 
-    # Transcribe each segment
-    for segment in segments:
-        update.message.reply_text(f"Transcribing {segment}...")
-        transcription += transcribe_segment(segment) + " "
+    max_retries = 5
+    final_transcription = ""  # Collect all transcriptions here
 
-        # Clean up segment files
-        os.remove(segment)
+    retry_count = 0
 
-    return transcription.strip()
+    while retry_count < max_retries:
+        # Process and accumulate transcription for all segments at the current length
+        transcription = await split_and_process_audio(audio_file, segment_length, overlap_seconds, filename, update)
+
+        # If transcription is successful (non-empty), accumulate the result
+        if transcription:
+            final_transcription += transcription + " "
+            retry_count = 0  # Reset retry counter on success
+            break  # Exit retry loop and move to the next segment
+
+        # Increment retry count if there was an issue
+        retry_count += 1
+        await update.message.reply_text(
+            f"Retry {retry_count}/{max_retries} for {segment_length}-second segments...")
+
+    return final_transcription.strip() if final_transcription else "Transcription failed after multiple retries."
