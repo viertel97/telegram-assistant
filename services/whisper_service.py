@@ -8,21 +8,15 @@ from telegram import Update
 
 logger = setup_logging(__file__)
 
-# Try to connect to the primary server, and fallback to localhost if needed
-try:
-    client = Client("http://faster-whisper-server.default.svc.cluster.local:8000")
-except Exception:
-    client = Client("http://localhost:8000")
 
-
-# Helper function to convert milliseconds to (hours:minutes:seconds)
 def millis_to_time_format(ms):
     hours, remainder = divmod(ms // 1000, 3600)
     minutes, seconds = divmod(remainder, 60)
     return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
 
 
-async def split_and_process_audio(audio_file, seconds: float, overlap_seconds: float, filename: str, update: Update):
+async def split_and_process_audio(audio_file, seconds: float, overlap_seconds: float, filename: str, client: Client,
+                                  update: Update):
     audio = AudioSegment.from_wav(audio_file.name)
     segment_length = int(seconds * 1000)  # Convert seconds to milliseconds
     overlap_length = int(overlap_seconds * 1000)  # Convert overlap seconds to milliseconds
@@ -51,7 +45,7 @@ async def split_and_process_audio(audio_file, seconds: float, overlap_seconds: f
         caption_text = f"Start: {start_time}\nEnd: {end_time}"
         await update.message.reply_audio(open(segment_name, "rb"), disable_notification=True, caption=caption_text)
 
-        transcribed_text = ""  # transcribe_segment(segment_name)
+        transcribed_text = transcribe_segment(segment_name, client)
 
         if transcribed_text is not None:
             logger.info(f"Transcription for {segment_name}: {transcribed_text}")
@@ -63,11 +57,9 @@ async def split_and_process_audio(audio_file, seconds: float, overlap_seconds: f
 
         to_delete.append(segment_name)
 
-        # Move to the next segment, starting slightly before the current segment ends (with overlap)
         start += segment_length
-        segment_counter += 1  # Increment segment counter for each new segment
+        segment_counter += 1
 
-    # Clean up all exported files after transcription
     for file in to_delete:
         try:
             os.remove(file)
@@ -77,8 +69,7 @@ async def split_and_process_audio(audio_file, seconds: float, overlap_seconds: f
     return transcription.strip()
 
 
-# Function to call the transcription API for each audio segment
-def transcribe_segment(segment_file):
+def transcribe_segment(segment_file, client: Client):
     counter = 0
     try:
         job = client.submit(
@@ -96,6 +87,7 @@ def transcribe_segment(segment_file):
             if counter % 5 == 0:
                 logger.info(f"Status: {job.status()}")
         response = job.result()
+        del job
         return response
     except Exception as e:
         logger.error(f"Error transcribing segment: {e}")
@@ -103,8 +95,11 @@ def transcribe_segment(segment_file):
 
 
 async def transcribe(audio_file, filename: str, update: Update):
-    # Main function to handle the transcription process with retry logic
-    # Define segment lengths in seconds (converted from minutes) and overlap
+    try:
+        client = Client("http://faster-whisper-server.default.svc.cluster.local:8000")
+    except Exception:
+        client = Client("http://localhost:8000")
+
     segment_length = 60  # 1-minute segment
     overlap_seconds = 5  # Define overlap (e.g., 5 seconds)
 
@@ -115,7 +110,8 @@ async def transcribe(audio_file, filename: str, update: Update):
 
     while retry_count < max_retries:
         # Process and accumulate transcription for all segments at the current length
-        transcription = await split_and_process_audio(audio_file, segment_length, overlap_seconds, filename, update)
+        transcription = await split_and_process_audio(audio_file, segment_length, overlap_seconds, filename, client,
+                                                      update)
 
         # If transcription is successful (non-empty), accumulate the result
         if transcription:

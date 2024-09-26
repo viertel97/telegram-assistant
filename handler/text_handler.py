@@ -34,10 +34,8 @@ async def handle_text(update: Update, context: CallbackContext):
         return
     else:
         await update.message.reply_text("File found")
-    # download file and write to "input.wav"
     with open("input.wav", "wb") as f:
         f.write(requests.get(file["@microsoft.graph.downloadUrl"]).content)
-    # send file
     await update.message.reply_text("done downloading - start transcribing")
     with open("input.wav", "rb") as f:
         await transcribe(f, file["name"], update)
