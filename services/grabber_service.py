@@ -158,7 +158,7 @@ def filter_data(days):
 
         labels, checked = get_labels(df_filtered_items.loc[index, "labels"], df_labels)
         if row["is_completed"] == True:
-            checked = True
+            checked = CHECKED
         project = df_projects.loc[df_projects['id'] == row["project_id"]]['name'].values[0]
         completed_at = row["completed_at"]
 
