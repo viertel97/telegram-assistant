@@ -60,6 +60,10 @@ async def get_bookmark_transcriptions(xml_data, caption, update: Update):
 
             recognized_text_de, recognized_text_en = audio_to_text(audio)
 
+            await update.message.reply_text(
+                f"de: {recognized_text_de['transcript']} ({recognized_text_de['confidence']})\n en: {recognized_text_en['transcript']} ({recognized_text_en['confidence']})",
+                disable_notification=True)
+
             if "title" in row.keys() and row['title'] is not None:
                 result_timestamp = datetime.strptime(row['title'], '%Y-%m-%dT%H:%M:%S%z')
             else:
@@ -84,13 +88,13 @@ async def get_bookmark_transcriptions(xml_data, caption, update: Update):
             })
             to_delete.append(temp_file_name)
             time.sleep(3)
-        time.sleep(3)
-        to_delete.append(file_name)
-    title, author = get_title_and_author(caption)
-    delete_files(to_delete)
-    message = "finished processing {} files from {} by {} and extracted {} transcriptions".format(len(df),
-                                                                                                  title,
-                                                                                                  author,
-                                                                                                  len(result_list))
-    await log_to_telegram(message, logger, update)
+            time.sleep(3)
+            to_delete.append(file_name)
+            title, author = get_title_and_author(caption)
+            delete_files(to_delete)
+            message = "finished processing {} files from {} by {} and extracted {} transcriptions".format(len(df),
+                                                                                                          title,
+                                                                                                          author,
+                                                                                                          len(result_list))
+            await log_to_telegram(message, logger, update)
     return result_list, title, author
