@@ -15,9 +15,8 @@ from todoist_api_python.headers import create_headers
 
 from helper.config_helper import is_not_correct_chat_id
 from services.github_service import add_todoist_dump_to_github
-from services.mermaid_service import create_mermaid_timeline
 from services.monica_service import add_todoist_dump_to_monica
-from services.todoist_service import TODOIST_API, get_default_offset_including_check
+from services.todoist_service import TODOIST_API, get_default_offset_including_check, get_completed_tasks
 
 TODOIST_TOKEN = get_secrets("todoist/token")
 CHECKED = "Yes"
@@ -44,7 +43,7 @@ async def dump_todoist_to_monica(update: Update, context: CallbackContext):
     days_to_dump = int(context.args[0]) if context.args else 3
     data, (content, public_content), raw = get_grabber_data(days_to_dump)
     try:
-        graph = create_mermaid_timeline(raw)
+        graph = None  # create_mermaid_timeline(raw)
     except Exception as e:
         logger.error(e)
         graph = None
@@ -90,6 +89,22 @@ def clean_api_response(api_response):
     return pd.DataFrame(temp_list)
 
 
+def clean_completed_tasks(api_response):
+    df = pd.DataFrame(api_response["items"])
+    df_concat = pd.concat([df.drop(['item_object'], axis=1), pd.json_normalize(df['item_object'])], axis=1)
+    df_concat.drop(['meta_data', 'note_count', 'v2_task_id', 'added_by_uid', 'assigned_by_uid', 'child_order',
+                    'collapsed', 'deadline', 'is_deleted', 'responsible_uid', 'sync_id',
+                    'updated_at', 'user_id', 'v2_id', 'v2_parent_id', 'v2_project_id',
+                    'v2_section_id', 'due.date', 'due.is_recurring', 'due.lang',
+                    'due.string', 'due.timezone'], axis=1, inplace=True)
+    df_concat.rename(columns={
+        'checked': 'is_completed',
+        'added_at': 'created_at',
+
+    }, inplace=True)
+    return df_concat
+
+
 HEADERS = create_headers(token=TODOIST_TOKEN)
 
 
@@ -101,10 +116,22 @@ def get_comments():
     )
 
 
+def transform_values(x):
+    if isinstance(x, list) and len(x) == 0:
+        return []
+    elif isinstance(x, float):
+        return []
+    else:
+        return x  # Keep filled lists as they are
+
+
 def filter_data(days):
     df_items = clean_api_response(TODOIST_API.get_tasks())
     df_projects = clean_api_response(TODOIST_API.get_projects())
     # df_items = df_items[df_items.is_completed == 0]
+    df_completed_tasks = clean_completed_tasks(get_completed_tasks(datetime.today() - timedelta(days=days + 1)))
+    df_items = pd.concat([df_items, df_completed_tasks], axis=0, ignore_index=True)
+
     df_notes = get_comments()
     df_labels = clean_api_response(TODOIST_API.get_labels())
 
@@ -112,7 +139,11 @@ def filter_data(days):
 
     after_start_date = df_items["created_at"] >= start_date
     df_filtered_items = df_items.loc[after_start_date]
-
+    df_filtered_items.sort_values(by="created_at", inplace=True)
+    df_filtered_items = df_filtered_items.drop(
+        ["assignee_id", "assigner_id", "comment_count", "creator_id", "due", "url", "sync_id", "task_id", "duration"],
+        axis=1)
+    df_filtered_items["notes"] = df_filtered_items["notes"].apply(transform_values)
     cleared_list = []
     for index, row in df_filtered_items.iterrows():
         comments = None
@@ -123,11 +154,20 @@ def filter_data(days):
         priority = row["priority"]
         description = row["description"]
         notes = df_notes[df_notes.item_id == row_id]
+        # check if "notes" is empty and row["notes"] is not None
+
         labels, checked = get_labels(df_filtered_items.loc[index, "labels"], df_labels)
+        if row["is_completed"] == True:
+            checked = CHECKED
         project = df_projects.loc[df_projects['id'] == row["project_id"]]['name'].values[0]
+        completed_at = row["completed_at"]
 
         if len(notes) > 0:
             comments = notes["content"].values
+        elif len(row["notes"]) > 0:
+            comments = [note["content"] for note in row["notes"]]
+        else:
+            comments = None
         cleared_list.append(
             {
                 "id": row_id,
@@ -139,6 +179,7 @@ def filter_data(days):
                 "labels": labels,
                 "description": description,
                 "project": project,
+                "completed_at": completed_at,
             }
         )
 
@@ -188,6 +229,7 @@ def filter_data(days):
             [
                 "checked",
                 "date_added",
+                "completed_at",
                 row_indexer,
                 "content",
                 "rework-comments",
@@ -205,6 +247,7 @@ def filter_data(days):
             [
                 "checked",
                 "date_added",
+                "completed_at",
                 "content",
                 "rework-comments",
                 "priority",

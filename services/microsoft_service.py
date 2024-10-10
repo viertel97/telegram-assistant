@@ -9,7 +9,6 @@ from quarter_lib.logging import setup_logging
 logger = setup_logging(__file__)
 
 base_url = "https://graph.microsoft.com/v1.0/"
-endpoint = base_url + "me"
 
 AUTHORITY_URL = "https://login.microsoftonline.com/consumers/"
 
