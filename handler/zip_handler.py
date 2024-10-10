@@ -3,7 +3,6 @@ import shutil
 import zipfile
 from os import path
 
-import pandas as pd
 from loguru import logger
 
 from services.audiobook_service import (

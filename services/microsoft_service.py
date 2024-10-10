@@ -13,7 +13,7 @@ endpoint = base_url + "me"
 
 AUTHORITY_URL = "https://login.microsoftonline.com/consumers/"
 
-SCOPES = ["User.Read", "Files.ReadWrite.All"]
+SCOPES = ["Files.ReadWrite.All", "Files.Read.All", "Notes.ReadWrite", "Notes.ReadWrite.All", "Notes.Read.All", "User.Read"]
 
 CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN = get_secrets(
     ["microsoft/client_id", "microsoft/client_secret", "microsoft/refresh_token"])
@@ -59,7 +59,7 @@ def get_file_list(path, access_token):
         "Content-Type": "application/json"
     }
 
-    url = base_url + f"me/drive/root:/" + '/'.join(path.split("/")) + ":/"
+    url = base_url + "me/drive/root:/" + '/'.join(path.split("/")) + ":/"
     logger.info("get file list from path: " + url)
     response = requests.get(url, headers=headers)
     if response.status_code != 200:

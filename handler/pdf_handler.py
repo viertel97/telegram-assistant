@@ -9,7 +9,6 @@ from telegram import Update
 
 from helper.file_helper import delete_files
 from services.logging_service import log_to_telegram
-from services.microsoft_service import replace_file_in_onedrive
 from services.todoist_service import get_items_by_todoist_project, run_todoist_sync_commands, update_description
 
 logger = setup_logging(__file__)
