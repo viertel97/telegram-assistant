@@ -1,7 +1,6 @@
 import csv
 import os
 from datetime import datetime
-from os import path
 
 import pandas as pd
 import pymysql
@@ -26,7 +25,7 @@ def update_sleep_entries(records):
             with connection.cursor() as cursor:
                 cursor.execute(sql, record)
                 connection.commit()
-        except pymysql.err.IntegrityError as e:
+        except pymysql.err.IntegrityError:
             not_added.append(record)
             continue
     close_server_connection(connection)

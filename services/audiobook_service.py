@@ -1,8 +1,5 @@
-import csv
 import os
 import xml.etree.ElementTree as ET
-from datetime import datetime
-from os import path
 
 import pandas as pd
 import pymysql

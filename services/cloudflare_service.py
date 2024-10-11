@@ -26,11 +26,11 @@ async def toggle_ips(update: Update, context: CallbackContext):
     current_dns_entries = get_current_dns_entries()
 
     if HOSTED_ID in str(current_dns_entries) and PRIVATE_IP not in str(current_dns_entries):
-        await log_to_telegram(f"switch from non_private_ip to private_ip", logger, update)
+        await log_to_telegram("switch from non_private_ip to private_ip", logger, update)
         selected_ip = PRIVATE_IP
         proxied = False
     else:
-        await log_to_telegram(f"switch from private_ip to non_private_ip", logger, update)
+        await log_to_telegram("switch from private_ip to non_private_ip", logger, update)
         selected_ip = HOSTED_ID
         proxied = False
 
