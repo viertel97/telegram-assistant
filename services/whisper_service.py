@@ -6,6 +6,8 @@ from pydub import AudioSegment
 from quarter_lib.logging import setup_logging
 from telegram import Update
 
+from helper.telegram_helper import retry_on_error
+
 logger = setup_logging(__file__)
 
 
@@ -45,17 +47,27 @@ async def split_and_process_audio(audio_file, seconds: float, overlap_seconds: f
 
         # Update caption with the desired format
         caption_text = f"Start: {start_time}\nEnd: {end_time}"
-        await update.message.reply_audio(open(segment_name, "rb"), disable_notification=True, caption=caption_text)
+        await retry_on_error(
+            update.message.reply_audio,
+            retry=5,
+            wait=0.1,
+            audio=open(segment_name, "rb"),
+            disable_notification=True,
+            caption=caption_text
+        )
 
         transcribed_text = transcribe_segment(segment_name, client)
 
         if transcribed_text is not None:
             logger.info(f"Transcription for {segment_name}: {transcribed_text}")
-            await update.message.reply_text(f"Transcription for '{segment_name}': \n{transcribed_text}",
-                                            disable_notification=True)
+            await retry_on_error(update.message.reply_text, retry=5, wait=0.1,
+                                 text=f"Transcription for '{segment_name}': \n{transcribed_text}",
+                                 disable_notification=True)
             transcription += transcribed_text + " "
         else:
-            await update.message.reply_text(f"Error transcribing {segment_name}.")
+            await retry_on_error(update.message.reply_text, retry=5, wait=0.1,
+                                 text=f"Error transcribing {segment_name}.",
+                                 disable_notification=True)
 
         to_delete.append(segment_name)
 
@@ -124,7 +136,8 @@ async def transcribe(audio_file, filename: str, start_at_segment: int, update: U
 
         # Increment retry count if there was an issue
         retry_count += 1
-        await update.message.reply_text(
-            f"Retry {retry_count}/{max_retries} for {segment_length}-second segments...")
+        await retry_on_error(update.message.reply_text, retry=5, wait=0.1,
+                             text=f"Retry {retry_count}/{max_retries} for {segment_length}-second segments...",
+                             disable_notification=True)
 
     return final_transcription.strip() if final_transcription else "Transcription failed after multiple retries."

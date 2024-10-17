@@ -7,6 +7,7 @@ from telegram import Update
 from telegram.ext import CallbackContext
 
 from helper.config_helper import is_not_correct_chat_id
+from helper.telegram_helper import retry_on_error
 from services.microsoft_service import get_file_list, get_access_token
 from services.whisper_service import transcribe
 
@@ -21,22 +22,23 @@ async def handle_text(update: Update, context: CallbackContext):
     text = update.message.text
     try:
         file_info = extract_info(text)
-        await update.message.reply_text(str(file_info))
+        await retry_on_error(update.message.reply_text, retry=5, wait=0.1, text=str(file_info))
     except Exception as e:
         logger.error(e)
-        await update.message.reply_text("Error")
+        await retry_on_error(update.message.reply_text, retry=5, wait=0.1, text=str(e))
         return
     token = get_access_token()
     files = get_file_list("Anwendungen/Call Recorder - SKVALEX", token)
     file = find_file(files, file_info["file_name"])
     if not file:
         await update.message.reply_text("File not found")
+        await retry_on_error(update.message.reply_text, retry=5, wait=0.1, text="File not found")
         return
     else:
-        await update.message.reply_text("File found")
+        await retry_on_error(update.message.reply_text, retry=5, wait=0.1, text="File found")
     with open("input.wav", "wb") as f:
         f.write(requests.get(file["@microsoft.graph.downloadUrl"]).content)
-    await update.message.reply_text("done downloading - start transcribing")
+    await retry_on_error(update.message.reply_text, retry=5, wait=0.1, text="done downloading - start transcribing")
     with open("input.wav", "rb") as f:
         await transcribe(f, file["name"], file_info['segment_counter'], update)
 
