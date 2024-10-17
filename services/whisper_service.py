@@ -15,17 +15,19 @@ def millis_to_time_format(ms):
     return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
 
 
-async def split_and_process_audio(audio_file, seconds: float, overlap_seconds: float, filename: str, client: Client,
+async def split_and_process_audio(audio_file, seconds: float, overlap_seconds: float, filename: str,
+                                  segment_counter: int, client: Client,
                                   update: Update):
     audio = AudioSegment.from_wav(audio_file.name)
     segment_length = int(seconds * 1000)  # Convert seconds to milliseconds
     overlap_length = int(overlap_seconds * 1000)  # Convert overlap seconds to milliseconds
     transcription = ""
     to_delete = []
-    segment_counter = 1  # Counter for naming segments
+    if not segment_counter:
+        segment_counter = 1  # Counter for naming segments
 
     # Start the segment loop with overlap in both directions
-    start = 0
+    start = (segment_counter - 1) * segment_length
     while start < len(audio):
         start_step = start - overlap_length
         if start_step < 0:
@@ -94,7 +96,7 @@ def transcribe_segment(segment_file, client: Client):
         return ""
 
 
-async def transcribe(audio_file, filename: str, update: Update):
+async def transcribe(audio_file, filename: str, start_at_segment: int, update: Update):
     try:
         client = Client("http://faster-whisper-server.default.svc.cluster.local:8000")
     except Exception:
@@ -110,7 +112,8 @@ async def transcribe(audio_file, filename: str, update: Update):
 
     while retry_count < max_retries:
         # Process and accumulate transcription for all segments at the current length
-        transcription = await split_and_process_audio(audio_file, segment_length, overlap_seconds, filename, client,
+        transcription = await split_and_process_audio(audio_file, segment_length, overlap_seconds, filename,
+                                                      start_at_segment, client,
                                                       update)
 
         # If transcription is successful (non-empty), accumulate the result

@@ -20,15 +20,15 @@ async def handle_text(update: Update, context: CallbackContext):
     await update.message.reply_text("start handle_text")
     text = update.message.text
     try:
-        call_info = extract_info(text)
-        await update.message.reply_text(str(call_info))
+        file_info = extract_info(text)
+        await update.message.reply_text(str(file_info))
     except Exception as e:
         logger.error(e)
         await update.message.reply_text("Error")
         return
     token = get_access_token()
     files = get_file_list("Anwendungen/Call Recorder - SKVALEX", token)
-    file = find_file(files, update.message.text)
+    file = find_file(files, file_info["file_name"])
     if not file:
         await update.message.reply_text("File not found")
         return
@@ -38,7 +38,7 @@ async def handle_text(update: Update, context: CallbackContext):
         f.write(requests.get(file["@microsoft.graph.downloadUrl"]).content)
     await update.message.reply_text("done downloading - start transcribing")
     with open("input.wav", "rb") as f:
-        await transcribe(f, file["name"], update)
+        await transcribe(f, file["name"], file_info['segment_counter'], update)
 
 
 def find_file(file_list, file_name):
@@ -52,6 +52,12 @@ def find_file(file_list, file_name):
 def extract_info(log_string):
     # Extract date (first 12 digits)
     date_str = log_string[:12]
+    if "@" in log_string:
+        filename = log_string.split("@")[0]
+        segment_counter = int(log_string.split("@")[1])
+    else:
+        filename = log_string
+        segment_counter = 1
     date = datetime.strptime(date_str, "%Y%m%d%H%M")
 
     # Extract incoming/outgoing type
@@ -70,4 +76,6 @@ def extract_info(log_string):
         "call_type": call_type,
         "contact_name": contact_name,
         "contact_number": contact_number,
+        "segment_counter": segment_counter,
+        "file_name": filename,
     }
