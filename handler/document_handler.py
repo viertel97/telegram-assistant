@@ -9,7 +9,6 @@ from handler.xml_handler import handle_xml
 from handler.zip_handler import handle_zip
 from helper.config_helper import is_not_correct_chat_id
 from helper.handler_helper import prepairing_document
-
 logger = setup_logging(__file__)
 
 
@@ -19,6 +18,12 @@ async def handle_document(update: Update, context: CallbackContext):
         return
     await update.message.reply_text("start handle_document")
     mime_type = update.message.document.mime_type
+    if not mime_type:
+        if update.message.document.file_name.endswith(".md"):
+            mime_type = "text/markdown"
+    if not mime_type:
+        await update.message.reply_text("couldnt determine mime type")
+        return
     logger.info("received: " + mime_type)
     await update.message.reply_text("received: " + mime_type)
     file_path, file_name = await prepairing_document(update, context)
