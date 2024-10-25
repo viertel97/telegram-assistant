@@ -7,6 +7,7 @@ from telegram import Update
 from telegram.ext import CallbackContext
 
 from helper.config_helper import is_not_correct_chat_id
+from helper.telegram_helper import retry_on_error
 from services.microsoft_service import get_file_list, get_access_token
 from services.whisper_service import transcribe
 
@@ -20,26 +21,25 @@ async def handle_text(update: Update, context: CallbackContext):
     await update.message.reply_text("start handle_text")
     text = update.message.text
     try:
-        call_info = extract_info(text)
-        await update.message.reply_text(str(call_info))
+        file_info = extract_info(text)
+        await retry_on_error(update.message.reply_text, retry=5, wait=0.1, text=str(file_info))
     except Exception as e:
         logger.error(e)
-        await update.message.reply_text("Error")
+        await retry_on_error(update.message.reply_text, retry=5, wait=0.1, text=str(e))
         return
     token = get_access_token()
     files = get_file_list("Anwendungen/Call Recorder - SKVALEX", token)
-    file = find_file(files, call_info['input'])
+    file = find_file(files, file_info["file_name"])
     if not file:
-        await update.message.reply_text("File not found")
+        await retry_on_error(update.message.reply_text, retry=5, wait=0.1, text="File not found")
         return
     else:
-        await update.message.reply_text("File found")
+        await retry_on_error(update.message.reply_text, retry=5, wait=0.1, text="File found")
     with open("input.wav", "wb") as f:
         f.write(requests.get(file["@microsoft.graph.downloadUrl"]).content)
-        await update.message.reply_text("done downloading - start transcribing")
-        await transcribe(f, call_info, update)
+        await retry_on_error(update.message.reply_text, retry=5, wait=0.1, text="done downloading - start transcribing")
+        await transcribe(f, file["name"], file_info, update)
     await update.message.reply_text("done transcribing of " + file["name"])
-
 
 
 def find_file(file_list, file_name):
@@ -53,6 +53,12 @@ def find_file(file_list, file_name):
 def extract_info(log_string):
     # Extract date (first 12 digits)
     date_str = log_string[:12]
+    if "@" in log_string:
+        filename = log_string.split("@")[0]
+        segment_counter = int(log_string.split("@")[1])
+    else:
+        filename = log_string
+        segment_counter = 1
     date = datetime.strptime(date_str, "%Y%m%d%H%M")
 
     # Extract incoming/outgoing type
@@ -71,5 +77,6 @@ def extract_info(log_string):
         "call_type": call_type,
         "contact_name": contact_name,
         "contact_number": contact_number,
-        "input": log_string,
+        "segment_counter": segment_counter,
+        "file_name": filename,
     }
