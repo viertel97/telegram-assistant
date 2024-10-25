@@ -18,13 +18,20 @@ def millis_to_time_format(ms):
     return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
 
 
-async def split_and_process_audio(audio_file, seconds: float, overlap_seconds: float, filename: str,
-                                  segment_counter: int, client: Client,
-async def split_and_process_audio(audio_file, seconds: float, overlap_seconds: float, call_date: datetime, client: Client,
-                                  update: Update):
+async def split_and_process_audio(
+    audio_file,
+    segment_length_in_seconds: float,
+    overlap_seconds: float,
+    call_date: datetime,
+    segment_counter: int,
+    client: Client,
+    update: Update,
+):
     audio = AudioSegment.from_wav(audio_file.name)
-    segment_length = int(seconds * 1000)  # Convert seconds to milliseconds
-    overlap_length = int(overlap_seconds * 1000)  # Convert overlap seconds to milliseconds
+    segment_length = int(segment_length_in_seconds * 1000)  # Convert seconds to milliseconds
+    overlap_length = int(
+        overlap_seconds * 1000
+    )  # Convert overlap seconds to milliseconds
     transcription = ""
     to_delete = []
     if not segment_counter:
@@ -36,8 +43,10 @@ async def split_and_process_audio(audio_file, seconds: float, overlap_seconds: f
         start_step = start - overlap_length
         if start_step < 0:
             start_step = 0
-        end = min(start + segment_length + overlap_length, len(audio))  # Ensure not to exceed file length
-        segment = audio[start_step: end]
+        end = min(
+            start + segment_length + overlap_length, len(audio)
+        )  # Ensure not to exceed file length
+        segment = audio[start_step:end]
 
         # Adjusted segment naming to be "Seg1:", "Seg2:", etc.
         segment_name = f"segment_{segment_counter}.wav"
@@ -51,8 +60,10 @@ async def split_and_process_audio(audio_file, seconds: float, overlap_seconds: f
         end_datetime = call_date + timedelta(milliseconds=end)
 
         # Update caption with the desired format
-        caption_text = f"Start: {start_time} ({start_datetime.strftime('%Y-%m-%d %H:%M:%S')})\n" \
-                       f"End: {end_time} ({end_datetime.strftime('%Y-%m-%d %H:%M:%S')})"
+        caption_text = (
+            f"Start: {start_time} ({start_datetime.strftime('%Y-%m-%d %H:%M:%S')})\n"
+            f"End: {end_time} ({end_datetime.strftime('%Y-%m-%d %H:%M:%S')})"
+        )
 
         await retry_on_error(
             update.message.reply_audio,
@@ -60,21 +71,29 @@ async def split_and_process_audio(audio_file, seconds: float, overlap_seconds: f
             wait=0.1,
             audio=open(segment_name, "rb"),
             disable_notification=True,
-            caption=caption_text
+            caption=caption_text,
         )
 
         transcribed_text = transcribe_segment(segment_name, client)
 
         if transcribed_text is not None:
             logger.info(f"Transcription for {segment_name}: {transcribed_text}")
-            await retry_on_error(update.message.reply_text, retry=5, wait=0.1,
-                                 text=f"Transcription for '{segment_name}': \n{transcribed_text}",
-                                 disable_notification=True)
+            await retry_on_error(
+                update.message.reply_text,
+                retry=5,
+                wait=0.1,
+                text=f"Transcription for '{segment_name}': \n{transcribed_text}",
+                disable_notification=True,
+            )
             transcription += transcribed_text + " "
         else:
-            await retry_on_error(update.message.reply_text, retry=5, wait=0.1,
-                                 text=f"Error transcribing {segment_name}.",
-                                 disable_notification=True)
+            await retry_on_error(
+                update.message.reply_text,
+                retry=5,
+                wait=0.1,
+                text=f"Error transcribing {segment_name}.",
+                disable_notification=True,
+            )
 
         to_delete.append(segment_name)
 
@@ -115,7 +134,7 @@ def transcribe_segment(segment_file, client: Client):
         return ""
 
 
-async def transcribe(audio_file, call_info: dict, start_at_segment: int, update: Update):
+async def transcribe(audio_file, file_info: dict, update: Update):
     try:
         client = Client("http://faster-whisper-server.default.svc.cluster.local:8000")
     except Exception:
@@ -131,9 +150,15 @@ async def transcribe(audio_file, call_info: dict, start_at_segment: int, update:
 
     while retry_count < max_retries:
         # Process and accumulate transcription for all segments at the current length
-        transcription = await split_and_process_audio(audio_file, segment_length, overlap_seconds, call_info['date'],
-                                                      start_at_segment, client,
-                                                      update)
+        transcription = await split_and_process_audio(
+            audio_file,
+            segment_length_in_seconds=segment_length,
+            overlap_seconds=overlap_seconds,
+            call_date=file_info["date"],
+            segment_counter=file_info["start_at_segment"],
+            client=client,
+            update=update,
+        )
 
         # If transcription is successful (non-empty), accumulate the result
         if transcription:
@@ -143,6 +168,10 @@ async def transcribe(audio_file, call_info: dict, start_at_segment: int, update:
 
         # Increment retry count if there was an issue
         retry_count += 1
-        await retry_on_error(update.message.reply_text, retry=5, wait=0.1,
-                             text=f"Retry {retry_count}/{max_retries} for {segment_length}-second segments...",
-                             disable_notification=True)
+        await retry_on_error(
+            update.message.reply_text,
+            retry=5,
+            wait=0.1,
+            text=f"Retry {retry_count}/{max_retries} for {segment_length}-second segments...",
+            disable_notification=True,
+        )
