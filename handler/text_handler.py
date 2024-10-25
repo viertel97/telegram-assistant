@@ -28,7 +28,7 @@ async def handle_text(update: Update, context: CallbackContext):
         return
     token = get_access_token()
     files = get_file_list("Anwendungen/Call Recorder - SKVALEX", token)
-    file = find_file(files, update.message.text)
+    file = find_file(files, call_info['input'])
     if not file:
         await update.message.reply_text("File not found")
         return
@@ -36,9 +36,10 @@ async def handle_text(update: Update, context: CallbackContext):
         await update.message.reply_text("File found")
     with open("input.wav", "wb") as f:
         f.write(requests.get(file["@microsoft.graph.downloadUrl"]).content)
-    await update.message.reply_text("done downloading - start transcribing")
-    with open("input.wav", "rb") as f:
-        await transcribe(f, file["name"], update)
+        await update.message.reply_text("done downloading - start transcribing")
+        await transcribe(f, call_info, update)
+    await update.message.reply_text("done transcribing of " + file["name"])
+
 
 
 def find_file(file_list, file_name):
@@ -70,4 +71,5 @@ def extract_info(log_string):
         "call_type": call_type,
         "contact_name": contact_name,
         "contact_number": contact_number,
+        "input": log_string,
     }

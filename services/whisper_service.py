@@ -1,5 +1,6 @@
 import os
 import time
+from datetime import datetime, timedelta
 
 from gradio_client import handle_file, Client
 from pydub import AudioSegment
@@ -15,7 +16,7 @@ def millis_to_time_format(ms):
     return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
 
 
-async def split_and_process_audio(audio_file, seconds: float, overlap_seconds: float, filename: str, client: Client,
+async def split_and_process_audio(audio_file, seconds: float, overlap_seconds: float, call_date: datetime, client: Client,
                                   update: Update):
     audio = AudioSegment.from_wav(audio_file.name)
     segment_length = int(seconds * 1000)  # Convert seconds to milliseconds
@@ -41,8 +42,13 @@ async def split_and_process_audio(audio_file, seconds: float, overlap_seconds: f
         start_time = millis_to_time_format(start_step)
         end_time = millis_to_time_format(end)
 
+        start_datetime = call_date + timedelta(milliseconds=start_step)
+        end_datetime = call_date + timedelta(milliseconds=end)
+
         # Update caption with the desired format
-        caption_text = f"Start: {start_time}\nEnd: {end_time}"
+        caption_text = f"Start: {start_time} ({start_datetime.strftime('%Y-%m-%d %H:%M:%S')})\n" \
+                        f"End: {end_time} ({end_datetime.strftime('%Y-%m-%d %H:%M:%S')})"
+
         await update.message.reply_audio(open(segment_name, "rb"), disable_notification=True, caption=caption_text)
 
         transcribed_text = transcribe_segment(segment_name, client)
@@ -94,11 +100,11 @@ def transcribe_segment(segment_file, client: Client):
         return ""
 
 
-async def transcribe(audio_file, filename: str, update: Update):
+async def transcribe(audio_file, call_info: dict, update: Update):
     try:
         client = Client("http://faster-whisper-server.default.svc.cluster.local:8000")
     except Exception:
-        client = Client("http://localhost:8000")
+        client = None # client("http://localhost:8000")
 
     segment_length = 60  # 1-minute segment
     overlap_seconds = 5  # Define overlap (e.g., 5 seconds)
@@ -110,7 +116,7 @@ async def transcribe(audio_file, filename: str, update: Update):
 
     while retry_count < max_retries:
         # Process and accumulate transcription for all segments at the current length
-        transcription = await split_and_process_audio(audio_file, segment_length, overlap_seconds, filename, client,
+        transcription = await split_and_process_audio(audio_file, segment_length, overlap_seconds, call_info['date'], client,
                                                       update)
 
         # If transcription is successful (non-empty), accumulate the result
@@ -123,5 +129,3 @@ async def transcribe(audio_file, filename: str, update: Update):
         retry_count += 1
         await update.message.reply_text(
             f"Retry {retry_count}/{max_retries} for {segment_length}-second segments...")
-
-    return final_transcription.strip() if final_transcription else "Transcription failed after multiple retries."
