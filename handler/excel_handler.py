@@ -35,13 +35,32 @@ def handle_strong(file_path):
 
 def read_strong_excel(file_path):
     df = pd.read_csv(file_path, sep=";")
+    df.rename({"Weight (kg)": "Weight"}, axis=1, inplace=True)
+    df.rename({"Distance (meters)": "Distance"}, axis=1, inplace=True)
+    df.rename({"Duration (sec)": "Workout Duration"}, axis=1, inplace=True)
 
-    df.Weight = df.Weight.str.replace(",", ".")
+    if df['Workout Duration'].dtype != 'O':
+        df['Workout Duration'] = df['Workout Duration'].apply(lambda x: str(round(x / 60, 0)) + 'm')
+    try:
+        df.Weight = df.Weight.str.replace(",", ".")
+    except:
+        pass
     df.Weight = df.Weight.astype(float)
-    df.RPE = df.RPE.str.replace(",", ".")
+    try:
+        df.RPE = df.RPE.str.replace(",", ".")
+    except:
+        pass
     df.RPE = df.RPE.astype(float)
     # df.Distance = df.Distance.str.replace(",", ".")
     # df.Distance = df.Distance.astype(float)
+
+    if "Weight Unit" not in df.columns:
+        df["Weight Unit"] = "kg"
+    if "Distance Unit" not in df.columns:
+        df["Distance Unit"] = None
+
+    if "Workout #" in df.columns:
+        df.drop("Workout #", axis=1, inplace=True)
 
     df = df.replace({np.nan: None})
     df = df.where(pd.notnull(df), None)
