@@ -22,25 +22,35 @@ async def handle_text(update: Update, context: CallbackContext):
     text = update.message.text
     try:
         file_info = extract_info(text)
-        await retry_on_error(update.message.reply_text, retry=5, wait=0.1, text=str(file_info))
+        await retry_on_error(
+            update.message.reply_text, retry=5, wait=0.1, text=str(file_info)
+        )
     except Exception as e:
         logger.error(e)
         await retry_on_error(update.message.reply_text, retry=5, wait=0.1, text=str(e))
         return
     token = get_access_token()
     files = get_file_list("Anwendungen/Call Recorder - SKVALEX", token)
-    file = find_file(files, file_info["file_name"])
-    if not file:
-        await update.message.reply_text("File not found")
-        await retry_on_error(update.message.reply_text, retry=5, wait=0.1, text="File not found")
+    file_info["file"] = find_file(files, file_info["file_name"])
+    if not file_info["file"]:
+        await retry_on_error(
+            update.message.reply_text, retry=5, wait=0.1, text="File not found"
+        )
         return
     else:
-        await retry_on_error(update.message.reply_text, retry=5, wait=0.1, text="File found")
+        await retry_on_error(
+            update.message.reply_text, retry=5, wait=0.1, text="File found"
+        )
     with open("input.wav", "wb") as f:
-        f.write(requests.get(file["@microsoft.graph.downloadUrl"]).content)
-    await retry_on_error(update.message.reply_text, retry=5, wait=0.1, text="done downloading - start transcribing")
-    with open("input.wav", "rb") as f:
-        await transcribe(f, file["name"], file_info['segment_counter'], update)
+        f.write(requests.get(file_info["file"]["@microsoft.graph.downloadUrl"]).content)
+        await retry_on_error(
+            update.message.reply_text,
+            retry=5,
+            wait=0.1,
+            text="done downloading - start transcribing",
+        )
+        await transcribe(f, file_info, update)
+    await update.message.reply_text("done transcribing of " + file_info["file"]["name"])
 
 
 def find_file(file_list, file_name):

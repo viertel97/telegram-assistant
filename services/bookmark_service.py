@@ -8,6 +8,7 @@ from quarter_lib.logging import setup_logging
 from telegram import Update
 
 from helper.file_helper import delete_files
+from helper.telegram_helper import retry_on_error
 from services.logging_service import log_to_telegram
 from services.microsoft_service import download_file_from_path
 from services.todoist_service import add_file_to_todoist
@@ -47,7 +48,7 @@ async def get_bookmark_transcriptions(xml_data, caption, update: Update):
             temp_file_name = "{file_name}-{file_position}.mp3".format(file_name=file_name[:-4],
                                                                       file_position=str(file_position))
             temp_sound.export(temp_file_name, format="wav")
-            await update.message.reply_document(open(temp_file_name, "rb"), caption=temp_file_name,
+            await retry_on_error(update.message.reply_document, retry=5, wait=0.1, document=open(temp_file_name, "rb"), caption=temp_file_name,
                                                 disable_notification=True)
             upload_result = await add_file_to_todoist(temp_file_name)
             logger.info("uploaded file '{file_name}' to todoist".format(file_name=temp_file_name))
@@ -60,8 +61,9 @@ async def get_bookmark_transcriptions(xml_data, caption, update: Update):
 
             recognized_text_de, recognized_text_en = audio_to_text(audio)
 
-            await update.message.reply_text(
-                f"de: {recognized_text_de['transcript']} ({recognized_text_de['confidence']})\n en: {recognized_text_en['transcript']} ({recognized_text_en['confidence']})",
+
+            await retry_on_error(update.message.reply_text, retry=5, wait=0.1,
+                text=f"de: {recognized_text_de['transcript']} ({recognized_text_de['confidence']})\n en: {recognized_text_en['transcript']} ({recognized_text_en['confidence']})",
                 disable_notification=True)
 
             if "title" in row.keys() and row['title'] is not None:
