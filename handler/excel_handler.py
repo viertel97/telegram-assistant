@@ -64,4 +64,6 @@ def read_strong_excel(file_path):
 
     df = df.replace({np.nan: None})
     df = df.where(pd.notnull(df), None)
+    df = df.reindex(sorted(df.columns), axis=1)
+
     return df.values.tolist(), len(df["Date"].unique())

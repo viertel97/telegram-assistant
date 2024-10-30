@@ -15,7 +15,7 @@ logger.add(
 def update_strong_entries(records, unique_sessions):
     logger.info("start update_strong_entries")
     connection = create_server_connection()
-    sql = """INSERT INTO `strong` (`Date`,`Workout Name`,`Exercise Name`,`Set Order`,`Weight`,`Weight Unit`,`Reps`,`RPE`,`Distance`,`Distance Unit`,`Seconds`,`Notes`,`Workout Notes`,`Workout Duration`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+    sql = """INSERT INTO `strong` (`Date`, `Distance`, `Distance Unit`, `Exercise Name`, `Notes`, `RPE`, `Reps`, `Seconds`, `Set Order`, `Weight`, `Weight Unit`, `Workout Duration`, `Workout Name`, `Workout Notes`) VALUES (%, %, %, %, %, %, %, %, %, %, %, %, %, %)"""
     try:
         with connection.cursor() as cursor:
             cursor.execute("TRUNCATE TABLE strong")
