@@ -15,7 +15,6 @@ from todoist_api_python.headers import create_headers
 
 from helper.config_helper import is_not_correct_chat_id
 from services.github_service import add_todoist_dump_to_github
-from services.monica_service import add_todoist_dump_to_monica
 from services.todoist_service import TODOIST_API, get_default_offset_including_check, get_completed_tasks
 
 TODOIST_TOKEN = get_secrets("todoist/token")
@@ -47,7 +46,8 @@ async def dump_todoist_to_monica(update: Update, context: CallbackContext):
     except Exception as e:
         logger.error(e)
         graph = None
-    timestamp = add_todoist_dump_to_monica(data)
+    # timestamp = add_todoist_dump_to_monica(data)
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     add_todoist_dump_to_github(data, graph)
     await update.message.reply_text("Dump was done at {timestamp}".format(timestamp=timestamp))
     await return_content(content, "All Content", update)
@@ -125,15 +125,20 @@ def transform_values(x):
         return x  # Keep filled lists as they are
 
 
-def filter_data(days):
+def get_data(days):
     df_items = clean_api_response(TODOIST_API.get_tasks())
     df_projects = clean_api_response(TODOIST_API.get_projects())
     # df_items = df_items[df_items.is_completed == 0]
     df_completed_tasks = clean_completed_tasks(get_completed_tasks(datetime.today() - timedelta(days=days + 1)))
     df_items = pd.concat([df_items, df_completed_tasks], axis=0, ignore_index=True)
-
     df_notes = get_comments()
     df_labels = clean_api_response(TODOIST_API.get_labels())
+
+    return df_items, df_projects, df_notes, df_labels
+
+
+def filter_data(days):
+    df_items, df_projects, df_notes, df_labels = get_data(days)
 
     start_date = (datetime.today() - timedelta(days=int(days))).strftime("%Y-%m-%d")
 
@@ -145,9 +150,8 @@ def filter_data(days):
         axis=1)
     df_filtered_items["notes"] = df_filtered_items["notes"].apply(transform_values)
     cleared_list = []
+    df_filtered_items.sort_values(by="created_at", inplace=True)
     for index, row in df_filtered_items.iterrows():
-        comments = None
-
         row_id = row["id"]
         date_added = row["created_at"]
         content = row["content"]
@@ -188,11 +192,9 @@ def filter_data(days):
     filtered_dates.sort_values(by="date_added", inplace=True)
     filtered_dates.reset_index(drop=True, inplace=True)
 
-    filtered_dates["temp_date"] = pd.to_datetime(filtered_dates["date_added"])
-    filtered_dates["temp_date"] = filtered_dates["temp_date"] + pd.Timedelta("02:00:00")
-    filtered_dates["temp_date_string"] = filtered_dates["temp_date"].dt.strftime("%d.%m.%Y %H:%M")
-    filtered_dates = filtered_dates.drop(["temp_date", "date_added"], axis=1)
-    filtered_dates = filtered_dates.rename(columns={"temp_date_string": "date_added"})
+    filtered_dates["date_added"] = pd.to_datetime(filtered_dates["date_added"])
+    filtered_dates["date_added"] = filtered_dates["date_added"] + pd.Timedelta("01:00:00")
+    filtered_dates["date_added_string"] = filtered_dates["date_added"].dt.strftime("%d.%m.%Y %H:%M")
     filtered_dates["content"] = filtered_dates["content"].str.replace('"', "")
     filtered_dates["source"] = "Todoist"
     filtered_dates["rework-comments"] = ""
@@ -229,6 +231,7 @@ def filter_data(days):
             [
                 "checked",
                 "date_added",
+                "date_added_string",
                 "completed_at",
                 row_indexer,
                 "content",
@@ -247,6 +250,7 @@ def filter_data(days):
             [
                 "checked",
                 "date_added",
+                "date_added_string",
                 "completed_at",
                 "content",
                 "rework-comments",
@@ -260,6 +264,8 @@ def filter_data(days):
             ]
         ]
     filtered_dates = filtered_dates.sort_values("date_added")
+    filtered_dates.drop("date_added", axis=1, inplace=True)
+    filtered_dates.rename(columns={"date_added_string": "date_added"}, inplace=True)
     return filtered_dates
 
 
