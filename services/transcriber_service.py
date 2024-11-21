@@ -115,8 +115,9 @@ async def transcribe_voice(update: Update, context: CallbackContext):
     file_id = update.message.voice.file_id
     file = await context.bot.get_file(file_id)
     file_path = os.path.join(sys.path[0], "voice.ogg")
-    await file.download(file_path)
-    print(file_path)
+    await file.download_to_drive(file_path)
+    logger.info(file_path)
+
 
     modification_date = datetime.fromtimestamp(os.path.getmtime(file_path)).strftime("%d.%m.%Y %H:%M")
     recognized_text, wav_converted_file_path = get_recognized_text(file_path)
