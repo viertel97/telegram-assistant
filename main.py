@@ -26,6 +26,7 @@ def get_command_handler():
         CommandHandler(str("start"), start),
         CommandHandler(str("wol"), wol),
         CommandHandler(str("dump_todoist_to_monica"), dump_todoist_to_monica),
+        CommandHandler(str("dump_todoist_to_monica_v2"), dump_todoist_to_monica_v2),
         CommandHandler(str("toggle_cloudflare_ips"), toggle_cloudflare_ips),
         CommandHandler(str("add_splitwise_placeholder"), add_splitwise_placeholder),
     )
