@@ -1,7 +1,6 @@
 beautifulsoup4==4.11.1
 loguru==0.5.3
 Markdown==3.3.4
-numpy==1.25.0
 pandas==1.5.3
 PyMySQL==1.0.2
 python_dateutil==2.8.2
@@ -17,3 +16,4 @@ quarter_lib==0.0.22
 gradio_client
 langchain-groq==0.2.1
 spacy==3.8.2
+numpy
