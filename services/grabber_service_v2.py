@@ -19,13 +19,16 @@ from services.grabber_service import HEADERS, MAX_LENGTH_PER_MESSAGE
 from services.grabber_service import VOICE_RECORDER_MATCH, \
     EASY_VOICE_RECORDER_MATCH, DEFAULT_OFFSET
 from services.grabber_service import clean_api_response, clean_completed_tasks
-from services.llm_service import get_summary
+from services.llm_service import get_summaries
 from services.todoist_service import get_completed_tasks, TODOIST_API
 from services.todoist_service import get_default_offset_including_check
 
 logger = setup_logging(__file__)
 
 days_to_dump = 1
+
+GHT_MATCH = r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\+\d{2}:\d{2}: "
+
 
 github_token = get_secrets(
     ["github/pat_obsidian"]
@@ -66,9 +69,10 @@ def get_grabber_data(days_to_dump):
     df_items, _, _, _ = get_data(days_to_dump)
     df_items = create_position_in_hierarchy(df_items)
 
-    timestamp = datetime.now().strftime("%d.%m.%Y %H:%M")
-    df_items.loc[df_items['parent_id'].isnull(), 'parent_content'] = slugify(f"Todoist-Dump {timestamp}")
-    list_of_files = [create_index_file_from_dict(timestamp, df_items[df_items['parent_id'].isnull()])]
+    timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    index_file_name = slugify(f"AAA_Todoist-Dump {timestamp}")
+    df_items.loc[df_items['parent_id'].isnull(), 'parent_content'] = index_file_name
+    list_of_files = [create_index_file_from_dict(index_file_name, timestamp, df_items[df_items['parent_id'].isnull()])]
 
     for index, row in df_items.iterrows():
         file = create_file_from_dict(row)
@@ -109,6 +113,11 @@ def handle_sources(data):
             date = content_array[1].split(".")[0].replace("'", "")
             # data.at[index, "created_at"] = datetime.strptime(date, "%Y-%m-%d %H:%M:%S").strftime("%d.%m.%Y %H:%M")
             data.at[index, "source"] = "Easy Voice Recorder"
+        elif re.match(GHT_MATCH, content):
+            match = re.match(GHT_MATCH, content)
+            rest_of_string = content.split(match.group(0))[1]
+            data.at[index, "content"] = rest_of_string
+            data.at[index, "source"] = "GHT"
         else:
             data.at[index, "source"] = "Todoist"
     return data
@@ -133,17 +142,16 @@ def get_comments(days):
             get_sync_url("sync"), headers=HEADERS, json={"sync_token": "*", "resource_types": ["notes"]}
         ).json()["notes"]
     )
-
-    df_notes["type"] = "note"
-    df_notes["source"] = "Todoist"
     df_notes.rename(columns={"item_id": "parent_id", "posted_at": "created_at"}, inplace=True)
+
 
     start_date = (datetime.today() - timedelta(days=days)).strftime("%Y-%m-%d")
     df_notes = df_notes[df_notes["created_at"] >= start_date]
 
+    df_notes["type"], df_notes["source"], df_notes["is_completed"] = "note", "Todoist", False
     df_notes = df_notes[~df_notes['content'].eq('')] # remove empty notes
-
     df_notes = df_notes[df_notes.is_deleted == False]
+
     df_notes.drop(
         columns=["is_deleted", "posted_uid", "reactions", "uids_to_notify", "v2_id", "v2_item_id", "v2_project_id",
                  "file_attachment"],
@@ -182,13 +190,20 @@ def get_items(days, df_projects, df_labels, df_notes):
     df_filtered_items = df_filtered_items[df_filtered_items['parent_id'].isin(df_filtered_items['id']) | df_filtered_items['parent_id'].isnull()]
 
     df_filtered_items["created_at"] = pd.to_datetime(df_filtered_items["created_at"]) + pd.Timedelta("01:00:00")
-    df_filtered_items["created_at_string"] = df_filtered_items["created_at"].dt.strftime("%d.%m.%Y %H:%M")
+    df_filtered_items["created_at_string"] = df_filtered_items["created_at"].dt.strftime("%Y-%m-%dT%H:%M:%S")
+
+    df_filtered_items['content'] = df_filtered_items['content'].str.split(' ~ ')
+    df_filtered_items = df_filtered_items.explode('content').reset_index(drop=True)
+
     df_filtered_items["content"] = df_filtered_items["content"].str.replace('"', "")
 
     df_filtered_items.drop(columns=[
         "assignee_id", "assigner_id", "comment_count", "creator_id", "due",
         "url", "sync_id", "duration", "order", "task_id", "project_id", "section_id", "notes"
     ], inplace=True)
+
+    df_filtered_items = df_filtered_items.where(pd.notnull(df_filtered_items), None)
+
     df_filtered_items.sort_values(by="created_at", ascending=False, inplace=True)
 
 
@@ -200,50 +215,39 @@ def get_data(days):
     df_labels = clean_api_response(TODOIST_API.get_labels())
     df_notes = get_comments(days)
     df_items = get_items(days, df_projects, df_labels, df_notes)
-    df_items["summary"] = get_summary(df_items)
+    df_items['summary'] = get_summaries(df_items.content)
     df_items[['slugified_title']] = df_items['summary'].apply(lambda x: slugify(x)).apply(
         pd.Series)
     return df_items, df_projects, df_notes, df_labels
 
 
 def create_position_in_hierarchy(df_items):
-    # Set 'id' as the index
     df_items.set_index('id', inplace=True)
 
-    # Create a dictionary to map IDs to their content
     id_to_content = df_items['slugified_title'].to_dict()
 
-    # Group by 'parent_id' and include items with 'parent_id' as None
     grouped = df_items.groupby('parent_id', dropna=False)
 
-    # Create a dictionary to store child IDs for each parent
     child_ids_dict = defaultdict(list)
 
-    # Iterate over each group
     for parent_id, group in grouped:
-        # Sort the group by 'created_at'
         sorted_group = group.sort_values(by='created_at')
 
-        # Iterate over the sorted group to define previous and next items
         for i in range(len(sorted_group)):
             item = sorted_group.iloc[i]
             prev_item = sorted_group.iloc[i - 1] if i > 0 else None
             next_item = sorted_group.iloc[i + 1] if i < len(sorted_group) - 1 else None
 
-            # Define previous and next items
             item_id = item.name
             df_items.at[item_id, 'prev_item'] = id_to_content[prev_item.name] if prev_item is not None else None
             df_items.at[item_id, 'next_item'] = id_to_content[next_item.name] if next_item is not None else None
 
-            # Add child ID to the parent
             if parent_id is not None:
                 child_ids_dict[parent_id].append(item_id)
 
-    # Add child_ids column to the DataFrame
     df_items['child_contents'] = df_items.index.map(
         lambda x: [id_to_content[child_id] for child_id in child_ids_dict[x]] if x in child_ids_dict else None)
 
-    # Map parent_id to content
     df_items['parent_content'] = df_items['parent_id'].map(lambda x: id_to_content[x] if x in id_to_content else None)
     return df_items
 
@@ -257,7 +261,9 @@ def generate_front_matter(hierarchy_dict, up_element_title=None, down_element_ti
         "prev": f"[[{prev_element_title}]]" if prev_element_title else None,
         "created": hierarchy_dict["created_at_string"],
         "slugified_title": hierarchy_dict["slugified_title"],
+        "content": hierarchy_dict["content"],
         "summary": hierarchy_dict["summary"],
+        "description": hierarchy_dict["description"],
         "project": hierarchy_dict["project"],
         "source": hierarchy_dict["source"],
         "labels": hierarchy_dict["labels"],
@@ -287,12 +293,12 @@ def create_file_from_dict(hierarchy_dict):
     content += f"# {hierarchy_dict['content']}\n\n{hierarchy_dict['description']}\n\n"
 
     return {
-        "filename": filename,
+        "filename": filename + ".md",
         "content": content
     }
 
 
-def create_index_file_from_dict(timestamp, root_elements):
+def create_index_file_from_dict(index_file_name, timestamp, root_elements):
     metadata_json = {
         "down": [f"[[{title}]]" for title in root_elements.slugified_title],
         "created": timestamp
@@ -306,11 +312,37 @@ def create_index_file_from_dict(timestamp, root_elements):
 
     content += f"# Todoist-Dump {timestamp}\n\n"
     content += """
+
+# Dataview
+
+## All
+
+```dataview
+TABLE WITHOUT ID link(file.link, content) AS "Content", description,
+    choice(is_completed = true, "✅", "❌") AS "Completion Status", 
+    created, labels, project, source
+WHERE contains(file.folder, this.file.folder) and file != this.file
+SORT created
+```
+
+## Open Tasks
+
+```dataview
+TABLE WITHOUT ID link(file.link, content) AS "Content", description,
+    choice(is_completed = true, "✅", "❌") AS "Completion Status", 
+    created, labels, project, source
+WHERE contains(file.folder, this.file.folder) and file != this.file and is_completed = false
+SORT created
+```
+
+# Breadcrumbs
+
 ```breadcrumbs
 type: tree
 dir: down
 fields: up, down, prev, next
 ```
+
 ```breadcrumbs
 type: juggl
 dir: down
@@ -320,6 +352,6 @@ autoZoom: true
 ```
 """
     return {
-        "filename": slugify(f"Todoist-Dump {timestamp}"),
+        "filename": index_file_name + ".md",
         "content": content
     }

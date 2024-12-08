@@ -1,8 +1,14 @@
+import numpy as np
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_groq import ChatGroq
 from quarter_lib.akeyless import get_secrets
+from quarter_lib.logging import setup_logging
 
+logger = setup_logging(__file__)
+
+
+CHUNK_SIZE = 10
 groq_api_key = get_secrets(
     ["groq/api_key"]
 )
@@ -21,5 +27,24 @@ prompt = PromptTemplate(
 chain = prompt | chat | parser
 
 
-def get_summary(df_items):
-    return chain.invoke({"notes": list(df_items.content)})["notes"]
+def get_summary(item_list):
+    # create some retry logic here
+    for i in range(3):
+        try:
+            result =  chain.invoke({"notes": item_list})["notes"]
+            if len(result) != len(item_list):
+                raise Exception("Result length does not match input length")
+            logger.info(f"Got result from langchain: {str(result)}")
+            return result
+        except Exception:
+            logger.exception("Error in get_summary")
+
+    return chain.invoke({"notes": item_list})["notes"]
+
+
+def get_summaries(content_list:list):
+    chunks = np.array_split(list(content_list), len(list(content_list)) // CHUNK_SIZE + 1)
+    summaries = []
+    for chunk in chunks:
+        summaries.extend(get_summary(chunk))
+    return summaries
