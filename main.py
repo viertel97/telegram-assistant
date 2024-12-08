@@ -5,7 +5,8 @@ from telegram import Update
 from telegram.ext import Application, CallbackContext, CommandHandler, MessageHandler
 
 from handler.audio_handler import handle_audio
-from handler.command_handler import wol, dump_todoist_to_monica, toggle_cloudflare_ips, add_splitwise_placeholder
+from handler.command_handler import wol, dump_todoist_to_monica, toggle_cloudflare_ips, add_splitwise_placeholder, \
+    dump_todoist_to_monica_v2
 from handler.document_handler import handle_document
 from handler.error_handler import handle_error
 from handler.text_handler import handle_text

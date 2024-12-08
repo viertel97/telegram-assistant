@@ -6,9 +6,7 @@ from datetime import timedelta, datetime
 
 import pandas as pd
 import requests
-import spacy
 import unicodedata
-from langdetect import detect
 from quarter_lib.akeyless import get_secrets
 from quarter_lib.logging import setup_logging
 from telegram import Update
@@ -26,8 +24,6 @@ from services.todoist_service import get_default_offset_including_check
 
 logger = setup_logging(__file__)
 
-nlp_de = spacy.load('de_core_news_sm')
-nlp_en = spacy.load('en_core_web_sm')
 days_to_dump = 1
 
 github_token = get_secrets(
@@ -43,7 +39,7 @@ async def dump_todoist_to_monica(update: Update, context: CallbackContext):
     data, list_of_files = get_grabber_data(days_to_dump)
     now = datetime.now()
     timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
-    #add_files_to_repository(list_of_files, f"obsidian-refresher: {now}", f'0300_Spaces/Social Circle/Todoist-Dumps/{now.strftime("%Y-%m-%d")}/')
+    # add_files_to_repository(list_of_files, f"obsidian-refresher: {now}", f'0300_Spaces/Social Circle/Todoist-Dumps/{now.strftime("%Y-%m-%d")}/')
     await update.message.reply_text("Dump was done at {timestamp}".format(timestamp=timestamp))
     await return_content(list(data.content), "All Content", update)
     logger.info("Done Todoist dump to Monica")
@@ -80,18 +76,6 @@ def get_grabber_data(days_to_dump):
     return df_items, list_of_files
 
 
-def detect_language(task):
-    # Detect language using langdetect
-    return detect(task)
-
-
-def generate_title_with_spacy(task, language):
-    # Use the appropriate language model based on detection
-    nlp = nlp_en if language == 'en' else nlp_de
-    doc = nlp(task)
-    # Extract key nouns and proper nouns for the title
-    keywords = [token.text for token in doc if token.pos_ in ('NOUN', 'PROPN')]
-    return ' '.join(keywords[:5])  # Return first 5 keywords as the title
 
 
 def slugify(value, allow_unicode=False):
@@ -104,20 +88,9 @@ def slugify(value, allow_unicode=False):
     # add max length which then triggers generate title
     value = re.sub(r'[-\s]+', '-', value).strip('-_')
     if len(value) > 40:
-        return generate_title(value)
+        return value[:40]
     else:
         return value
-
-
-def generate_title(task):
-    language = detect_language(task)
-    if language == 'de':
-        title = generate_title_with_spacy(task, 'de')
-    else:
-        title = generate_title_with_spacy(task, 'en')
-    return title
-
-
 
 
 def handle_sources(data):
@@ -199,10 +172,10 @@ def get_items(days, df_projects, df_labels, df_notes):
     df_filtered_items = df_filtered_items[~pd.concat(exclusions, axis=1).any(axis=1)]
 
     df_filtered_items = handle_sources(df_filtered_items)
-    df_filtered_items = handle_offset(df_filtered_items)
 
     df_filtered_items["type"] = "task"
     df_filtered_items = pd.concat([df_filtered_items, df_notes])
+    df_filtered_items = handle_offset(df_filtered_items)
 
     # remove items from which the parent is not in the list or parent id is none
     df_filtered_items = df_filtered_items[df_filtered_items['parent_id'].isin(df_filtered_items['id']) | df_filtered_items['parent_id'].isnull()]
