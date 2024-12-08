@@ -14,6 +14,7 @@ from telegram.ext import CallbackContext
 from todoist_api_python.endpoints import get_sync_url
 
 from helper.config_helper import is_not_correct_chat_id
+from services.github_service import add_files_to_repository
 from services.grabber_service import HEADERS, MAX_LENGTH_PER_MESSAGE
 from services.grabber_service import VOICE_RECORDER_MATCH, \
     EASY_VOICE_RECORDER_MATCH, DEFAULT_OFFSET
@@ -39,7 +40,7 @@ async def dump_todoist_to_monica(update: Update, context: CallbackContext):
     data, list_of_files = get_grabber_data(days_to_dump)
     now = datetime.now()
     timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
-    # add_files_to_repository(list_of_files, f"obsidian-refresher: {now}", f'0300_Spaces/Social Circle/Todoist-Dumps/{now.strftime("%Y-%m-%d")}/')
+    add_files_to_repository(list_of_files, f"obsidian-refresher: {now}", f'0300_Spaces/Social Circle/Todoist-Dumps/{now.strftime("%Y-%m-%d")}/')
     await update.message.reply_text("Dump was done at {timestamp}".format(timestamp=timestamp))
     await return_content(list(data.content), "All Content", update)
     logger.info("Done Todoist dump to Monica")
