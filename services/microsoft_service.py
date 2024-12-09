@@ -66,8 +66,20 @@ def get_file_list(path, access_token):
     destination_folder_id = response.json()['id']
     list_files_url = f"https://graph.microsoft.com/v1.0/me/drive/items/{destination_folder_id}/children"
 
-    response = requests.get(list_files_url, headers=headers)
-    return response.json(), destination_folder_id
+    response = requests.get(list_files_url, headers=headers).json()
+    files = response['value']
+    if '@odata.nextLink' in response.keys():
+        next_link = response['@odata.nextLink']
+        while next_link:
+            response = requests.get(next_link, headers=headers).json()
+            files.extend(response['value'])
+            if '@odata.nextLink' in response.keys():
+                next_link = response['@odata.nextLink']
+            else:
+                next_link = None
+
+
+    return files, destination_folder_id
 
 
 def copy_file(file_id, original_file_name, access_token):

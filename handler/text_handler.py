@@ -1,3 +1,4 @@
+import os
 import re
 from datetime import datetime
 
@@ -8,8 +9,8 @@ from telegram.ext import CallbackContext
 
 from helper.config_helper import is_not_correct_chat_id
 from helper.telegram_helper import retry_on_error
+from services.groq_service import transcribe_groq
 from services.microsoft_service import get_file_list, get_access_token
-from services.whisper_service import transcribe
 
 logger = setup_logging(__file__)
 
@@ -30,7 +31,7 @@ async def handle_text(update: Update, context: CallbackContext):
         await retry_on_error(update.message.reply_text, retry=5, wait=0.1, text=str(e))
         return
     token = get_access_token()
-    files = get_file_list("Anwendungen/Call Recorder - SKVALEX", token)
+    files, destination_folder_id = get_file_list("Anwendungen/Call Recorder - SKVALEX", token)
     file_info["file"] = find_file(files, file_info["file_name"])
     if not file_info["file"]:
         await retry_on_error(
@@ -49,12 +50,14 @@ async def handle_text(update: Update, context: CallbackContext):
             wait=0.1,
             text="done downloading - start transcribing",
         )
-        await transcribe(f, file_info, update)
+        #await transcribe(f, file_info, update)
+    await transcribe_groq("input.wav", file_info, update)
     await update.message.reply_text("done transcribing of " + file_info["file"]["name"])
+    os.remove("input.wav")
 
 
 def find_file(file_list, file_name):
-    for file in file_list[0]["value"]:
+    for file in file_list:
         if "@microsoft.graph.downloadUrl" in file.keys():
             if file_name in file["name"]:
                 return file
