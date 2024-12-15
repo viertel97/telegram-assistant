@@ -38,9 +38,7 @@ def get_summary(item_list):
             return result
         except Exception:
             logger.exception("Error in get_summary")
-
-    return chain.invoke({"notes": item_list})["notes"]
-
+            raise Exception("Error in get_summary")
 
 def get_summaries(content_list:list):
     chunks = np.array_split(list(content_list), len(list(content_list)) // CHUNK_SIZE + 1)
