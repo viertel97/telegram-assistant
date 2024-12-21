@@ -9,7 +9,8 @@ from telegram import Update
 
 from helper.file_helper import delete_files
 from services.logging_service import log_to_telegram
-from services.todoist_service import get_items_by_todoist_project, run_todoist_sync_commands, update_description
+from services.todoist_service import get_items_by_todoist_project, run_todoist_sync_commands, update_description, \
+    get_rework_projects
 
 logger = setup_logging(__file__)
 FINDING_THRESHOLD = 0.75
@@ -39,7 +40,8 @@ def get_filtered_findings(findings):
 
 async def handle_pdf(file_path, file_name, update: Update):
     to_delete = []
-    tasks = get_items_by_todoist_project("2281154095")
+    projects = get_rework_projects("Book-Notes")
+    tasks = [tasks for project in projects for tasks in get_items_by_todoist_project(project.id)]
     tasks = [filter_content(task.__dict__) for task in tasks]
     df = pd.DataFrame(tasks)
     grouped_df = df.groupby("title")
