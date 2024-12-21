@@ -58,8 +58,8 @@ def paragraph_to_task(paragraph, title, comment=None):
         return text
 
 
-def get_smallest_project():
-    rework_projects = get_rework_projects()
+def get_smallest_project(project_name_start_with):
+    rework_projects = get_rework_projects(project_name_start_with)
     project_sizes = [len(get_items_by_todoist_project(project.id)) for project in rework_projects]
     min_size = min(project_sizes)
     idx = project_sizes.index(min_size)
@@ -71,7 +71,7 @@ def split_str_to_chars(text, chars=2047):
 
 
 async def add_tasks(tasks, message, update):
-    project, min_size, idx = get_smallest_project()
+    project, min_size, idx = get_smallest_project("Book-Rework")
     await log_to_telegram("List {idx} ({project_id}) was chosen as the smallest project with {min_size} items".format(
         idx=idx + 1, project_id=project.id, min_size=min_size), logger, update)
     if min_size + len(tasks) <= 300:

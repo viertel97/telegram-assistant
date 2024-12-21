@@ -4,7 +4,9 @@ from json import dumps
 from quarter_lib.logging import setup_logging
 from telegram import Update
 
+from services.book_note_service import get_smallest_project
 from services.bookmark_service import get_bookmark_transcriptions
+from services.logging_service import log_to_telegram
 from services.todoist_service import run_todoist_sync_commands
 from services.xml_service import xml_to_dict
 
@@ -16,6 +18,11 @@ async def handle_xml(file_path, file_name, update: Update):
     xml_dict = await xml_to_dict(xml, update)
     transcribed_bookmarks, title, author = await get_bookmark_transcriptions(xml_dict, update.message.caption,
                                                                              update)
+
+    project, min_size, idx = get_smallest_project("Book-Notes")
+    await log_to_telegram("List {idx} ({project_id}) was chosen as the smallest project with {min_size} items".format(
+        idx=idx + 1, project_id=project.id, min_size=min_size), logger, update)
+
     command_list = []
     for transcribed_bookmark in transcribed_bookmarks:
         content = transcribed_bookmark["title"] + " - add highlight to Zotero"
@@ -43,7 +50,7 @@ async def handle_xml(file_path, file_name, update: Update):
                 "type": "item_add",
                 "temp_id": generated_temp_id,
                 "args": {"content": content, "description": desc,
-                         "project_id": "2281154095",
+                         "project_id": project.id,
                          },
             }
         )

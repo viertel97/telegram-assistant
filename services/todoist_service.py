@@ -85,11 +85,11 @@ async def update_description(task_id, description):
     return TODOIST_API.update_task(task_id, description=description)
 
 
-def get_rework_projects():
+def get_rework_projects(project_name_start_with):
     projects = TODOIST_API.get_projects()
     rework_projects = []
     for project in projects:
-        if project.name.startswith("Book-Rework"):
+        if project.name.startswith(project_name_start_with):
             rework_projects.append(project)
     return rework_projects
 
