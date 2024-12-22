@@ -174,7 +174,7 @@ def get_items(days, df_projects, df_labels, df_notes):
 
     exclusions = [
         df_filtered_items['content'].str.contains('add highlight to Zotero'),
-        df_filtered_items['project'].isin(["Einkaufsliste"]),
+        df_filtered_items['project'].isin(["Einkaufsliste", "Habits"]),
         df_filtered_items['project'].str.contains('Book-Rework'),
         df_filtered_items['content'].str.startswith('item not found: '),
         df_filtered_items['content'].str.contains('nacharbeiten & Tracker pflegen'),
@@ -273,7 +273,7 @@ def generate_front_matter(hierarchy_dict, up_element_title=None, down_element_ti
         "description": hierarchy_dict["description"],
         "project": hierarchy_dict["project"],
         "source": hierarchy_dict["source"],
-        "labels": hierarchy_dict["labels"],
+        "tags": hierarchy_dict["labels"],
         "is_completed": hierarchy_dict["is_completed"],
         "type": hierarchy_dict["type"],
     }
