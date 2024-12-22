@@ -38,6 +38,7 @@ async def dump_todoist_to_monica(update: Update, context: CallbackContext):
     if is_not_correct_chat_id(update.message.chat_id):
         await update.message.reply_text("Nah")
         return
+    await update.message.reply_text("Starting Todoist dump V2")
     logger.info("starting Todoist dump to Monica")
     days_to_dump = int(context.args[0]) if context.args else 3
     data, list_of_files = get_grabber_data(days_to_dump)
@@ -104,7 +105,7 @@ def handle_sources(data):
         if re.match(VOICE_RECORDER_MATCH, content):
             date_array = content.split(" ")
             date = f"{date_array[0]} {date_array[1]}"
-            data.at[index, "created_at"] = date
+            #data.at[index, "created_at"] = parser.parse(date).strftime("%Y-%m-%d %H:%M:%S")
             data.at[index, "content"] = content.split(date)[1][2:]
             data.at[index, "source"] = "Voice Recorder"
         elif re.match(EASY_VOICE_RECORDER_MATCH, content):
@@ -177,6 +178,11 @@ def get_items(days, df_projects, df_labels, df_notes):
         df_filtered_items['project'].str.contains('Book-Rework'),
         df_filtered_items['content'].str.startswith('item not found: '),
         df_filtered_items['content'].str.contains('nacharbeiten & Tracker pflegen'),
+        df_filtered_items['content'].str.contains(r"^.* in Zotero & Obsidian einpflegen$"),
+        df_filtered_items['content'].isin(['Hörbücher updaten + in einzelne Kapitel aufteilen + PDF runterladen']),
+        df_filtered_items['content'].str.contains(r"^Aus Obsidian-Datei für .* Tasks generieren$"),
+        df_filtered_items['content'].str.contains(r"^Vorherige Obsidian-Notizen aus dem Buch .* in 10 Takeaways überführen \+ Impressionen, Zitate und Bonus einpflegen$"),
+        df_filtered_items['content'].isin(["Spülmaschine leeren", "Waschmaschine leeren + Wäsche aufhängen", "Wäsche abhängen"]),
     ]
     df_filtered_items = df_filtered_items[~pd.concat(exclusions, axis=1).any(axis=1)]
 
@@ -195,6 +201,7 @@ def get_items(days, df_projects, df_labels, df_notes):
     df_filtered_items['content'] = df_filtered_items['content'].str.split(' ~ ')
     df_filtered_items = df_filtered_items.explode('content').reset_index(drop=True)
 
+    df_filtered_items["content"] = df_filtered_items["content"].replace({"Ş": "S", "ş": "s"}, regex=True)
     df_filtered_items["content"] = df_filtered_items["content"].str.replace('"', "")
 
     df_filtered_items.drop(columns=[
