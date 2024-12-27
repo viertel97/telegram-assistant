@@ -16,12 +16,12 @@ def process_arguments(arguments):
     for item in arguments:
         if '"' in item:
             if inside_quotes:
-                temp_list.append(item.replace('"', ''))
-                processed_list.append(' '.join(temp_list))
+                temp_list.append(item.replace('"', ""))
+                processed_list.append(" ".join(temp_list))
                 temp_list = []
                 inside_quotes = False
             else:
-                temp_list.append(item.replace('"', ''))
+                temp_list.append(item.replace('"', ""))
                 inside_quotes = True
         else:
             if inside_quotes:
@@ -33,9 +33,10 @@ def process_arguments(arguments):
                     processed_list.append(item)
 
     if temp_list:
-        processed_list.append(' '.join(temp_list))
+        processed_list.append(" ".join(temp_list))
 
     return processed_list
+
 
 async def add_placeholder_to_splitwise(update: Update, context: CallbackContext):
     if is_not_correct_chat_id(update.message.chat_id):
@@ -46,7 +47,7 @@ async def add_placeholder_to_splitwise(update: Update, context: CallbackContext)
         group_name = arguments[0]
         number_of_placeholder = int(arguments[1])
     elif len(context.args) == 2:
-        group_name = context.args[0].replace('"', '').strip()
+        group_name = context.args[0].replace('"', "").strip()
         number_of_placeholder = int(context.args[1].strip())
     else:
         await update.message.reply_text("Invalid number of arguments")

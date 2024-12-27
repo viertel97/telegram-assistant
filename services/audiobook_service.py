@@ -7,7 +7,12 @@ from loguru import logger
 from quarter_lib_old.database import close_server_connection, create_server_connection
 
 logger.add(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
+    os.path.join(
+        os.path.dirname(os.path.abspath(__file__))
+        + "/logs/"
+        + os.path.basename(__file__)
+        + ".log"
+    ),
     format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
     backtrace=True,
     diagnose=True,
@@ -19,7 +24,9 @@ SQL_UPDATE = """UPDATE `audiobook_statistics` SET seconds = %s WHERE author = %s
 
 def get_records_to_add_add_and_update(old_records, new_records):
     to_add, to_update, unchanged = [], [], []
-    m = new_records.merge(old_records, on=["author", "title", "month"], how="left", indicator=True)
+    m = new_records.merge(
+        old_records, on=["author", "title", "month"], how="left", indicator=True
+    )
     m["seconds_x"] = pd.to_numeric(m["seconds_x"])
     m["seconds_y"] = pd.to_numeric(m["seconds_y"])
 
@@ -47,8 +54,12 @@ def get_records_to_add_add_and_update(old_records, new_records):
 def update_audiobook_statistics(new_records):
     logger.info("start upadte_audiobook_statistics")
     connection = create_server_connection()
-    old_records = pd.read_sql("SELECT seconds, author, title, month FROM audiobook_statistics", connection)
-    to_add, to_update, unchanged = get_records_to_add_add_and_update(old_records, new_records)
+    old_records = pd.read_sql(
+        "SELECT seconds, author, title, month FROM audiobook_statistics", connection
+    )
+    to_add, to_update, unchanged = get_records_to_add_add_and_update(
+        old_records, new_records
+    )
 
     for record in to_add:
         try:
@@ -95,7 +106,14 @@ def read_audiobook_statistics(path):
                 time = y.text.split(" ")
                 month = time[0]
                 seconds_listened = time[1]
-                data.append({"seconds": seconds_listened, "author": author, "title": title, "month": month})
+                data.append(
+                    {
+                        "seconds": seconds_listened,
+                        "author": author,
+                        "title": title,
+                        "month": month,
+                    }
+                )
     df = pd.DataFrame(data)
     df.dropna(inplace=True)
     return df

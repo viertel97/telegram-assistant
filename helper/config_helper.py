@@ -4,6 +4,7 @@ from quarter_lib.akeyless import get_secrets
 
 CHAT_ID = get_secrets("telegram/chat_id")
 
+
 def is_not_correct_chat_id(chat_id):
     return not (str(chat_id) == CHAT_ID)
 

@@ -28,7 +28,9 @@ async def split_and_process_audio(
     update: Update,
 ):
     audio = AudioSegment.from_wav(audio_file.name)
-    segment_length = int(segment_length_in_seconds * 1000)  # Convert seconds to milliseconds
+    segment_length = int(
+        segment_length_in_seconds * 1000
+    )  # Convert seconds to milliseconds
     overlap_length = int(
         overlap_seconds * 1000
     )  # Convert overlap seconds to milliseconds

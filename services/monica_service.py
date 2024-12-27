@@ -14,7 +14,12 @@ INBOX_CONTACT_ID = 52
 MICROJOURNAL_CONTACT_ID = 58
 
 logger.add(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
+    os.path.join(
+        os.path.dirname(os.path.abspath(__file__))
+        + "/logs/"
+        + os.path.basename(__file__)
+        + ".log"
+    ),
     format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
     backtrace=True,
     diagnose=True,
@@ -46,7 +51,9 @@ def add_todoist_dump_to_monica(data):
             connection.commit()
             last_row_id = cursor.lastrowid
 
-            activity_contact_values = tuple((last_row_id, INBOX_CONTACT_ID, DEFAULT_ACCOUNT_ID))
+            activity_contact_values = tuple(
+                (last_row_id, INBOX_CONTACT_ID, DEFAULT_ACCOUNT_ID)
+            )
             cursor.execute(
                 "INSERT INTO activity_contact (activity_id, contact_id, account_id) VALUES (%s, %s, %s)",
                 activity_contact_values,

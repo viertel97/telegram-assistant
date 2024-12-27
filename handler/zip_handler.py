@@ -12,7 +12,12 @@ from services.audiobook_service import (
 from services.sleep_as_android_service import read_sleep_csv, update_sleep_entries
 
 logger.add(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
+    os.path.join(
+        os.path.dirname(os.path.abspath(__file__))
+        + "/logs/"
+        + os.path.basename(__file__)
+        + ".log"
+    ),
     format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
     backtrace=True,
     diagnose=True,
@@ -29,7 +34,9 @@ async def handle_zip(file_path, file_name, update):
         done_message = update_sleep_entries(records)
     elif path.exists(folder + "/!Smart AudioBook Player Statistics/statistics.xml"):
         await update.message.reply_text("Smart AudioBook Player")
-        records = read_audiobook_statistics(folder + "/!Smart AudioBook Player Statistics/statistics.xml")
+        records = read_audiobook_statistics(
+            folder + "/!Smart AudioBook Player Statistics/statistics.xml"
+        )
         done_message = update_audiobook_statistics(records)
     os.remove(file_path)
     shutil.rmtree(folder)

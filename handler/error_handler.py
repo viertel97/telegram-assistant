@@ -26,7 +26,9 @@ async def handle_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> No
 
     # traceback.format_exception returns the usual python message about an exception, but as a
     # list of strings rather than a single string, so we have to join them together.
-    tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
+    tb_list = traceback.format_exception(
+        None, context.error, context.error.__traceback__
+    )
     tb_string = "".join(tb_list)
 
     # Build the message with some markup and additional information about what happened.
@@ -48,7 +50,9 @@ async def handle_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> No
     else:
         messages_needed = len(message) // MAX_LENGTH_PER_MESSAGE + 1
         for i in range(messages_needed):
-            temp = message[i * MAX_LENGTH_PER_MESSAGE: (i + 1) * MAX_LENGTH_PER_MESSAGE]
+            temp = message[
+                i * MAX_LENGTH_PER_MESSAGE : (i + 1) * MAX_LENGTH_PER_MESSAGE
+            ]
             await context.bot.send_message(
                 chat_id=CHAT_ID, text=temp, parse_mode=ParseMode.HTML
             )

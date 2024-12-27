@@ -16,19 +16,30 @@ logger = setup_logging(__file__)
 async def handle_xml(file_path, file_name, update: Update):
     xml = open(file_path, "r", encoding="utf-8").read()  # Read file
     xml_dict = await xml_to_dict(xml, update)
-    transcribed_bookmarks, title, author = await get_bookmark_transcriptions(xml_dict, update.message.caption,
-                                                                             update)
+    transcribed_bookmarks, title, author = await get_bookmark_transcriptions(
+        xml_dict, update.message.caption, update
+    )
 
     project, min_size, idx = get_smallest_project("Book-Notes")
-    await log_to_telegram("List {idx} ({project_id}) was chosen as the smallest project with {min_size} items".format(
-        idx=idx + 1, project_id=project.id, min_size=min_size), logger, update)
+    await log_to_telegram(
+        "List {idx} ({project_id}) was chosen as the smallest project with {min_size} items".format(
+            idx=idx + 1, project_id=project.id, min_size=min_size
+        ),
+        logger,
+        update,
+    )
 
     command_list = []
     for transcribed_bookmark in transcribed_bookmarks:
         content = transcribed_bookmark["title"] + " - add highlight to Zotero"
 
-        if "timestamp" in transcribed_bookmark and transcribed_bookmark["timestamp"] is not None:
-            recording_timestamp = transcribed_bookmark["timestamp"].strftime("%Y-%m-%d %H:%M:%S")
+        if (
+            "timestamp" in transcribed_bookmark
+            and transcribed_bookmark["timestamp"] is not None
+        ):
+            recording_timestamp = transcribed_bookmark["timestamp"].strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
         else:
             recording_timestamp = None
         description_dict = {
@@ -43,30 +54,36 @@ async def handle_xml(file_path, file_name, update: Update):
             "file_position": transcribed_bookmark["file_position"],
             "annotation": transcribed_bookmark["annotation"],
         }
-        desc = dumps(description_dict, indent=4, sort_keys=True, ensure_ascii=False).encode('utf8').decode()
+        desc = (
+            dumps(description_dict, indent=4, sort_keys=True, ensure_ascii=False)
+            .encode("utf8")
+            .decode()
+        )
         generated_temp_id = "_" + str(uuid.uuid4())
         command_list.append(
             {
                 "type": "item_add",
                 "temp_id": generated_temp_id,
-                "args": {"content": content, "description": desc,
-                         "project_id": project.id,
-                         },
+                "args": {
+                    "content": content,
+                    "description": desc,
+                    "project_id": project.id,
+                },
             }
         )
         command_list.append(
             {
                 "type": "note_add",
-                "args": {"content": "",
-                         "item_id": generated_temp_id,
-                         "file_attachment":
-                             {
-                                 "file_name": transcribed_bookmark['upload_result']['file_name'],
-                                 "file_size": transcribed_bookmark['upload_result']['file_size'],
-                                 "file_type": transcribed_bookmark['upload_result']['file_type'],
-                                 "file_url": transcribed_bookmark['upload_result']['file_url'],
-                             },
-                         }
+                "args": {
+                    "content": "",
+                    "item_id": generated_temp_id,
+                    "file_attachment": {
+                        "file_name": transcribed_bookmark["upload_result"]["file_name"],
+                        "file_size": transcribed_bookmark["upload_result"]["file_size"],
+                        "file_type": transcribed_bookmark["upload_result"]["file_type"],
+                        "file_url": transcribed_bookmark["upload_result"]["file_url"],
+                    },
+                },
             }
         )
 
@@ -75,8 +92,12 @@ async def handle_xml(file_path, file_name, update: Update):
         logger.error("Error while adding to Todoist")
         raise Exception("Error while adding to Todoist " + sync_command_results.text)
     logger.info(sync_command_results)
-    message = "Transcribed {} bookmarks for {} by {}".format(
-        len(transcribed_bookmarks), title, author) + " and added them to Todoist"
+    message = (
+        "Transcribed {} bookmarks for {} by {}".format(
+            len(transcribed_bookmarks), title, author
+        )
+        + " and added them to Todoist"
+    )
 
     logger.info(message)
     return message

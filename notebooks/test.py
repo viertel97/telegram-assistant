@@ -15,6 +15,7 @@ def read_markdown():
 # %%
 soup = read_markdown()
 
+
 # %%
 def get_tasks(soup):
     for child in soup.find_all("h1"):
@@ -29,7 +30,8 @@ def get_tasks(soup):
                 if (
                     child.next_sibling is not None
                     and child.next_sibling.name == "blockquote"
-                    and child.next_sibling.next_sibling.next_silbling.name == "blockquote"
+                    and child.next_sibling.next_sibling.next_silbling.name
+                    == "blockquote"
                 ):
                     tasks.append(paragraph_to_task(child, child.next_sibling.text))
                 else:
@@ -47,7 +49,6 @@ def paragraph_to_task(paragraph, comment=None):
     if comment:
         return (text, comment)
     else:
-
         return text
 
 

@@ -9,7 +9,10 @@ from quarter_lib_old.todoist import (
     get_user_state,
     move_item_to_project,
     run_sync_commands,
-    update_due, upload_file, get_items_by_project, get_items_by_label,
+    update_due,
+    upload_file,
+    get_items_by_project,
+    get_items_by_label,
 )
 from todoist_api_python.api import TodoistAPI
 from todoist_api_python.endpoints import get_sync_url
@@ -105,9 +108,21 @@ def get_completed_tasks(since):
         headers=HEADERS,
     ).json()
     response["items"] = [
-        {k: v for k, v in item.items() if
-         k not in ["completed_at", "content", "id", "project_id", "section_id", "user_id", "v2_project_id",
-                   "v2_section_id"]}
+        {
+            k: v
+            for k, v in item.items()
+            if k
+            not in [
+                "completed_at",
+                "content",
+                "id",
+                "project_id",
+                "section_id",
+                "user_id",
+                "v2_project_id",
+                "v2_section_id",
+            ]
+        }
         for item in response["items"]
     ]
     return response

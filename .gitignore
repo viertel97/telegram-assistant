@@ -1,4 +1,8 @@
-
+*.pdf
+notebooks/files
+*.xml
+*.pkl
+*.md
 *.cmd
 *.code-workspace
 *.html

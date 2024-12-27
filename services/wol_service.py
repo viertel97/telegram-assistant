@@ -14,7 +14,7 @@ async def start_pc_via_wol(update: Update, context: CallbackContext):
     if is_not_correct_chat_id(update.message.chat_id):
         await update.message.reply_text("Nah")
         return
-    start_without_monitors = not (context.args[0] == 'False') if context.args else True
+    start_without_monitors = not (context.args[0] == "False") if context.args else True
 
     requests.post("http://192.168.178.110:8123/api/webhook/" + WOL_WEBHOOK)
     if start_without_monitors:

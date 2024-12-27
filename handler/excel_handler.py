@@ -7,7 +7,12 @@ from loguru import logger
 from services.strong_service import update_strong_entries
 
 logger.add(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
+    os.path.join(
+        os.path.dirname(os.path.abspath(__file__))
+        + "/logs/"
+        + os.path.basename(__file__)
+        + ".log"
+    ),
     format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
     backtrace=True,
     diagnose=True,
@@ -39,8 +44,10 @@ def read_strong_excel(file_path):
     df.rename({"Distance (meters)": "Distance"}, axis=1, inplace=True)
     df.rename({"Duration (sec)": "Workout Duration"}, axis=1, inplace=True)
 
-    if df['Workout Duration'].dtype != 'O':
-        df['Workout Duration'] = df['Workout Duration'].apply(lambda x: str(round(x / 60, 0)) + 'm')
+    if df["Workout Duration"].dtype != "O":
+        df["Workout Duration"] = df["Workout Duration"].apply(
+            lambda x: str(round(x / 60, 0)) + "m"
+        )
     try:
         df.Weight = df.Weight.str.replace(",", ".")
     except:

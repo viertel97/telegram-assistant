@@ -16,6 +16,7 @@ async def wol(update: Update, context: CallbackContext):
 async def dump_todoist_to_monica(update: Update, context: CallbackContext):
     await dump(update, context)
 
+
 async def dump_todoist_to_monica_v2(update: Update, context: CallbackContext):
     await dump_v2(update, context)
 
@@ -26,6 +27,7 @@ async def toggle_cloudflare_ips(update: Update, context: CallbackContext):
 
 async def add_splitwise_placeholder(update: Update, context: CallbackContext):
     await add_placeholder_to_splitwise(update, context)
+
 
 async def transcribe_call(update: Update, context: CallbackContext):
     await transcribe_call_from_one_drive(update, context)

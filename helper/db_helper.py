@@ -4,7 +4,9 @@ from quarter_lib.logging import setup_logging
 
 logger = setup_logging(__file__)
 DB_USER_NAME, DB_HOST_NAME, DB_PASSWORD, DB_PORT, DB_NAME = get_target("private")
-DB_USER_NAME_MONICA, _, DB_PASSWORD_MONICA, DB_PORT_MONICA, DB_NAME_MONICA = get_target("monica")
+DB_USER_NAME_MONICA, _, DB_PASSWORD_MONICA, DB_PORT_MONICA, DB_NAME_MONICA = get_target(
+    "monica"
+)
 
 
 def create_server_connection():

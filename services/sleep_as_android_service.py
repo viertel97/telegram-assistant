@@ -8,7 +8,12 @@ from loguru import logger
 from quarter_lib_old.database import close_server_connection, create_server_connection
 
 logger.add(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),
+    os.path.join(
+        os.path.dirname(os.path.abspath(__file__))
+        + "/logs/"
+        + os.path.basename(__file__)
+        + ".log"
+    ),
     format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
     backtrace=True,
     diagnose=True,
@@ -51,7 +56,17 @@ def read_sleep_csv(path):
                     time = row[2].split().pop(3)
                     hour, minute = time.split(":")
                     current_time = (
-                        year + "-" + month[:-1] + "-" + day[1:-1] + "T" + hour + ":" + minute[0] + minute[1] + "SZ"
+                        year
+                        + "-"
+                        + month[:-1]
+                        + "-"
+                        + day[1:-1]
+                        + "T"
+                        + hour
+                        + ":"
+                        + minute[0]
+                        + minute[1]
+                        + "SZ"
                     )
                     sleepid = row[0]
                     tz = row[1]

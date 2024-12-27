@@ -9,12 +9,11 @@ logger = setup_logging(__file__)
 
 
 CHUNK_SIZE = 10
-groq_api_key = get_secrets(
-    ["groq/api_key"]
-)
+groq_api_key = get_secrets(["groq/api_key"])
 
-chat = ChatGroq(temperature=0.5, model_name="llama-3.3-70b-versatile",
-                groq_api_key=groq_api_key)
+chat = ChatGroq(
+    temperature=0.5, model_name="llama-3.3-70b-versatile", groq_api_key=groq_api_key
+)
 
 parser = JsonOutputParser()
 
@@ -33,7 +32,7 @@ def get_summary(item_list):
     # create some retry logic here
     for i in range(3):
         try:
-            result =  chain.invoke({"notes": item_list})["notes"]
+            result = chain.invoke({"notes": item_list})["notes"]
             if len(result) != len(item_list):
                 raise Exception("Result length does not match input length")
             logger.info(f"Got result from langchain: {str(result)}")
@@ -42,8 +41,11 @@ def get_summary(item_list):
             logger.exception("Error in get_summary")
             raise Exception("Error in get_summary")
 
-def get_summaries(content_list:list):
-    chunks = np.array_split(list(content_list), len(list(content_list)) // CHUNK_SIZE + 1)
+
+def get_summaries(content_list: list):
+    chunks = np.array_split(
+        list(content_list), len(list(content_list)) // CHUNK_SIZE + 1
+    )
     summaries = []
     for chunk in chunks:
         summaries.extend(get_summary(chunk))

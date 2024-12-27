@@ -94,12 +94,22 @@ async def transcribe_video(update: Update, context: CallbackContext):
 
 
 def audio_to_text(audio):
-    recognized_alternatives_de = r.recognize_google(audio, language="de-DE", show_all=True)
-    recognized_alternatives_en = r.recognize_google(audio, language="en-US", show_all=True)
-    recognized_text_de = {'transcript': "", 'confidence': 0} if type(recognized_alternatives_de) is list else \
-        recognized_alternatives_de['alternative'][0]
-    recognized_text_en = {'transcript': "", 'confidence': 0} if type(recognized_alternatives_en) is list else \
-        recognized_alternatives_en['alternative'][0]
+    recognized_alternatives_de = r.recognize_google(
+        audio, language="de-DE", show_all=True
+    )
+    recognized_alternatives_en = r.recognize_google(
+        audio, language="en-US", show_all=True
+    )
+    recognized_text_de = (
+        {"transcript": "", "confidence": 0}
+        if type(recognized_alternatives_de) is list
+        else recognized_alternatives_de["alternative"][0]
+    )
+    recognized_text_en = (
+        {"transcript": "", "confidence": 0}
+        if type(recognized_alternatives_en) is list
+        else recognized_alternatives_en["alternative"][0]
+    )
     return recognized_text_de, recognized_text_en
 
 
@@ -118,29 +128,40 @@ async def transcribe_voice(update: Update, context: CallbackContext):
     await file.download_to_drive(file_path)
     logger.info(file_path)
 
-
-    modification_date = datetime.fromtimestamp(os.path.getmtime(file_path)).strftime("%d.%m.%Y %H:%M")
+    modification_date = datetime.fromtimestamp(os.path.getmtime(file_path)).strftime(
+        "%d.%m.%Y %H:%M"
+    )
     recognized_text, wav_converted_file_path = get_recognized_text(file_path)
     if "absatz" in recognized_text.lower():
         phrases = recognized_text.lower().split("absatz")
         for phrase in phrases:
             final_message = modification_date + " : " + phrase
             await update.message.reply_text(final_message)
-            if ("einkaufsliste" in phrase.lower()):
-                final_message = phrase.replace("Einkaufsliste", "").replace("auf", "").replace("der",
-                                                                                               "").replace(" ",
-                                                                                                           "")
-                await add_to_todoist_with_file(final_message, file_path, project_id="2247224944")
+            if "einkaufsliste" in phrase.lower():
+                final_message = (
+                    phrase.replace("Einkaufsliste", "")
+                    .replace("auf", "")
+                    .replace("der", "")
+                    .replace(" ", "")
+                )
+                await add_to_todoist_with_file(
+                    final_message, file_path, project_id="2247224944"
+                )
             else:
                 await add_to_todoist_with_file(final_message, file_path)
 
     else:
         final_message = modification_date + " : " + recognized_text
-        if ("einkaufsliste" in recognized_text.lower()):
-            final_message = recognized_text.replace("Einkaufsliste", "").replace("auf", "").replace("der",
-                                                                                                    "").replace(" ",
-                                                                                                                "")
-            await add_to_todoist_with_file(final_message, file_path, project_id="2247224944")
+        if "einkaufsliste" in recognized_text.lower():
+            final_message = (
+                recognized_text.replace("Einkaufsliste", "")
+                .replace("auf", "")
+                .replace("der", "")
+                .replace(" ", "")
+            )
+            await add_to_todoist_with_file(
+                final_message, file_path, project_id="2247224944"
+            )
         else:
             await add_to_todoist_with_file(final_message, file_path)
         await update.message.reply_text(final_message)

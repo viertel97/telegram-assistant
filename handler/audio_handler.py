@@ -14,7 +14,10 @@ async def handle_audio(update: Update, context: CallbackContext):
     if is_not_correct_chat_id(update.message.chat_id):
         await update.message.reply_text("Nah")
         return
-    mime_type, performer = update.message.audio.mime_type, update.message.audio.performer
+    mime_type, performer = (
+        update.message.audio.mime_type,
+        update.message.audio.performer,
+    )
     logger.info("received audio " + mime_type + " by " + performer)
     file_path, file_name = await prepairing_audio(update, context)
     if mime_type == "audio/mpeg" and performer == "Easy Voice Recorder Pro":

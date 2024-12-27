@@ -10,7 +10,7 @@ logger = setup_logging(__file__)
 async def xml_to_dict(data, update):
     root = ET.XML(data)
     data = []
-    for item in root.findall('./bookmark'):  # find all projects node
+    for item in root.findall("./bookmark"):  # find all projects node
         data_dict = {}  # dictionary to store content of each projects
         data_dict.update(item.attrib)  # make panelist_login the first key of the dict
         for child in item:
