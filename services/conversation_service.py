@@ -6,7 +6,7 @@ from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackContext
 
 from helper.config_helper import is_not_correct_chat_id
-from services.groq_service import transcribe_groq_new
+from services.groq_service import transcribe_groq
 from services.microsoft_service import (
     get_access_token,
     get_file_list,
@@ -63,7 +63,7 @@ async def transcribe_call_from_one_drive(update: Update, context: CallbackContex
     )
     download_file_by_id(data["id"], "input.wav")
 
-    await transcribe_groq_new(
+    await transcribe_groq(
         "input.wav", context.bot.send_message, chat_id=update.effective_chat.id
     )
 
