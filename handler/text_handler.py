@@ -31,7 +31,9 @@ async def handle_text(update: Update, context: CallbackContext):
         await retry_on_error(update.message.reply_text, retry=5, wait=0.1, text=str(e))
         return
     token = get_access_token()
-    files, destination_folder_id = get_file_list("Anwendungen/Call Recorder - SKVALEX", token)
+    files, destination_folder_id = get_file_list(
+        "Anwendungen/Call Recorder - SKVALEX", token
+    )
     file_info["file"] = find_file(files, file_info["file_name"])
     if not file_info["file"]:
         await retry_on_error(
@@ -50,8 +52,8 @@ async def handle_text(update: Update, context: CallbackContext):
             wait=0.1,
             text="done downloading - start transcribing",
         )
-        #await transcribe(f, file_info, update)
-    await transcribe_groq("input.wav", file_info, update)
+        # await transcribe(f, file_info, update)
+    await transcribe_groq("input.wav", update.message.reply_text)
     await update.message.reply_text("done transcribing of " + file_info["file"]["name"])
     os.remove("input.wav")
 
