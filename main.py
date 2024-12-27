@@ -57,7 +57,7 @@ def main():
         application.add_handler(
             handler,
         )
-        for handler in get_command_handler() + get_message_handler()  # + get_conversation_handler()
+        for handler in get_command_handler() + get_message_handler() + get_conversation_handler()
     ]
     application.add_error_handler(handle_error)
     logger.info("Start polling")
