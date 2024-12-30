@@ -64,7 +64,7 @@ async def transcribe_call_from_one_drive(update: Update, context: CallbackContex
     download_file_by_id(data["id"], "input.wav")
 
     await transcribe_groq(
-        "input.wav", context.bot.send_message, chat_id=update.effective_chat.id
+        "input.wav", file_function=context.bot.send_document, text_function=context.bot.send_message, chat_id=update.effective_chat.id
     )
 
     await context.bot.send_message(

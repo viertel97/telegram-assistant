@@ -11,7 +11,8 @@ async def retry_on_error(func, wait=0.1, retry=0, *args, **kwargs):
     while True:
         try:
             return await func(*args, **kwargs)
-        except NetworkError:
+        except NetworkError as e:
+            logger.error(e)
             logger.error(f"Network Error. Retrying...{i}")
             i += 1
             time.sleep(wait)

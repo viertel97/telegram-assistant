@@ -54,26 +54,27 @@ def audio_to_text(filepath):
     return translation.text
 
 
-async def transcribe_groq(audio_file, function, **kwargs):
+async def transcribe_groq(audio_file, file_function, text_function, **kwargs):
     chunk_files = split_wav_by_size(audio_file)
     for chunk_file in chunk_files:
         logger.info(f"Transcribing chunk: {chunk_file}")
         transcription = audio_to_text(chunk_file)
         logger.info(f"Transcription: {transcription}")
         await retry_on_error(
-            function,
+            file_function,
             retry=5,
             wait=0.1,
-            text=f"Transcription for '{chunk_file}': \n{transcription}",
+            caption=f"'{chunk_file}'",
+            disable_notification=True,
+            document=open(chunk_file, "rb"),
+            **kwargs,
+        )
+        await retry_on_error(
+            text_function,
+            retry=5,
+            wait=0.1,
+            text=f"Transcription for '{chunk_file}':\n\n{transcription}",
             disable_notification=True,
             **kwargs,
         )
         os.remove(chunk_file)
-    await retry_on_error(
-        function,
-        retry=5,
-        wait=0.1,
-        text="Transcription finished",
-        disable_notification=True,
-        **kwargs,
-    )
