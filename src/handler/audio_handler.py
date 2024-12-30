@@ -1,4 +1,3 @@
-from loguru import logger
 from quarter_lib.logging import setup_logging
 from quarter_lib_old.easy_voice_recorder import get_meditation_logs
 from telegram import Update
