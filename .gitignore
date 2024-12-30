@@ -1,3 +1,4 @@
+.pdm-python
 *.pdf
 notebooks/files
 *.xml

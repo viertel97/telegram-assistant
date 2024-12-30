@@ -1,21 +1,25 @@
-FROM python:3.9-slim-buster
+ARG PYTHON_BASE=3.11-slim-buster
 ARG PAT
 
-COPY . .
+FROM python:$PYTHON_BASE AS builder
+ARG PAT
 
-COPY requirements.txt .
+RUN pip install -U pdm
 
-RUN apt-get update
-RUN apt-get upgrade -y
-RUN apt-get install -y ffmpeg procps flac
+ENV PDM_CHECK_UPDATE=false
 
-RUN pip install -r requirements.txt
-RUN pip install --upgrade --extra-index-url https://Quarter-Lib-Old:${PAT}@pkgs.dev.azure.com/viertel/Quarter-Lib-Old/_packaging/Quarter-Lib-Old/pypi/simple/ quarter-lib-old
+COPY pyproject.toml pdm.lock README.md /project/
+COPY src/ /project/src
 
-ENV IS_CONTAINER=True
+WORKDIR /project
+RUN pdm install --check --prod --no-editable
 
-CMD ["python", "main.py"]
+FROM python:$PYTHON_BASE
+RUN apt-get update && apt-get install -y ffmpeg procps flac
 
+COPY --from=builder /project/.venv/ /project/.venv
+ENV PATH="/project/.venv/bin:$PATH"
 
+COPY src /project/src
 
-
+CMD ["python", "/project/src/main.py"]

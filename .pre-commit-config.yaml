@@ -1,0 +1,69 @@
+repos:
+ # PDM (Ensure the correct env)
+- repo: local
+  hooks:
+    - id: pdm-install
+      name: pdm install
+      entry: pdm install
+      language: system
+      pass_filenames: false
+
+# commit message
+- repo: https://github.com/compilerla/conventional-pre-commit
+  rev: v3.6.0
+  hooks:
+    - id: conventional-pre-commit
+      name: conventional commit (local)
+      entry: conventional-pre-commit
+      always_run: true
+      stages: [commit-msg]
+      args:
+        - Merge
+        - build
+        - chore
+        - ci
+        - docs
+        - feat
+        - fix
+        - perf
+        - refactor
+        - revert
+        - style
+        - test
+
+# - repo: https://github.com/pre-commit/pre-commit-hooks
+#   rev: v4.5.0
+#   hooks:
+#     - id: trailing-whitespace
+#     - id: end-of-file-fixer
+#       exclude: (^.idea/|^api/generator)
+#     - id: check-yaml
+#       exclude: ^(templates|helm)/ # gitlab ci and helm use templating
+#       args: [--allow-multiple-documents]
+#     - id: check-added-large-files
+
+# Ruff (Linting)
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.7.1
+  hooks:
+    # Run the linter.
+    - id: ruff
+      name: ruff
+      entry: ruff check
+      types_or: [ python, pyi ]
+      args: []
+    # Run the formatter.
+    - id: ruff-format
+      name: ruff-format
+      entry: ruff format
+      types_or: [ python, pyi ]
+      args: []
+
+#   # Mypy (Type Checking)
+# - repo: https://github.com/pre-commit/mirrors-mypy
+#   rev: 'v1.13.0'
+#   hooks:
+#     - id: mypy
+#       name: mypy
+#       types_or: [ python, pyi, jupyter ]
+#       args: [ --config-file=.code_quality/mypy.ini ]

@@ -1,0 +1,54 @@
+[project]
+name = "telegram-assistant"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "viertel97", email = "janik.viertel@outlook.com"},
+]
+dependencies = [
+    "beautifulsoup4==4.11.1",
+    "loguru==0.5.3",
+    "Markdown==3.3.4",
+    "pandas==1.5.3",
+    "PyMySQL==1.0.2",
+    "python-dateutil==2.8.2",
+    "python-telegram-bot==21.0.1",
+    "SpeechRecognition==3.8.1",
+    "todoist-api-python==2.0.2",
+    "tabulate==0.9.0",
+    "pydub==0.25.1",
+    "msal==1.20.0",
+    "PyMuPDF==1.21.1",
+    "PyGithub==1.58.2",
+    "quarter-lib==0.0.22",
+    "langchain-groq==0.2.1",
+    "numpy==1.26.4",
+    "quarter-lib-old",
+]
+requires-python = "==3.11.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
+
+[tool.pdm.dev-dependencies]
+dev = ["pdm>=2.18.3", "pre-commit>=2.15.0"]
+linting = ["ruff>=0.7.1"]
+security = ["bandit>=1.7.10"]
+type-checking = ["mypy>=1.13.0"]
+testing = []
+documentation = []
+
+[tool.pdm.scripts]
+install-pre-commit-msg-hook = "pre-commit install --hook-type commit-msg"
+
+[tool.mypy]
+# Exclude __init__.py files in src and tests directories
+exclude = "^src/__init__.py$|^tests/__init__.py$"
+
+[[tool.pdm.source]]
+name = "Quarter-Lib-Old"
+url = "https://Quarter-Lib-Old:${PAT}@pkgs.dev.azure.com/viertel/Quarter-Lib-Old/_packaging/Quarter-Lib-Old/pypi/simple/"
+include_packages = ["quarter-lib-old"]
