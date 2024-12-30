@@ -1,3 +1,4 @@
+from quarter_lib.akeyless import get_secrets # noqa: F401
 from quarter_lib.logging import setup_logging
 from telegram import Update
 from telegram.ext import (
