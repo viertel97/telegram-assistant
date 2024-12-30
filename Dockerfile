@@ -21,5 +21,6 @@ COPY --from=builder /project/.venv/ /project/.venv
 ENV PATH="/project/.venv/bin:$PATH"
 
 COPY src /project/src
+RUN mv /project/src/main.py /project/main.py
 
-CMD ["python", "/project/src/main.py"]
+CMD ["python", "/project/main.py"]

@@ -1,4 +1,3 @@
-from quarter_lib.akeyless import get_secrets
 from quarter_lib.logging import setup_logging
 from telegram import Update
 from telegram.ext import (
@@ -10,20 +9,20 @@ from telegram.ext import (
 	filters,
 )
 
-from handler.audio_handler import handle_audio
-from handler.command_handler import (
+from src.handler.audio_handler import handle_audio
+from src.handler.command_handler import (
 	add_splitwise_placeholder,
 	dump_todoist_to_monica,
 	dump_todoist_to_monica_v2,
 	toggle_cloudflare_ips,
 	wol,
 )
-from handler.document_handler import handle_document
-from handler.error_handler import handle_error
-from handler.text_handler import handle_text
-from handler.video_handler import video_to_text
-from handler.voice_handler import voice_to_text
-from services.conversation_service import get_last_calls, transcribe_call_from_one_drive
+from src.handler.document_handler import handle_document
+from src.handler.error_handler import handle_error
+from src.handler.text_handler import handle_text
+from src.handler.video_handler import video_to_text
+from src.handler.voice_handler import voice_to_text
+from src.services.conversation_service import get_last_calls, transcribe_call_from_one_drive
 
 logger = setup_logging(__file__)
 
