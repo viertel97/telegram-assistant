@@ -17,8 +17,9 @@ parser = JsonOutputParser()
 
 prompt = PromptTemplate(
 	template="""
-You are summarizing a list of personal notes. Summarize each note individually, ensuring it is concise and retains its main meaning.
-Provide the output as a list of unique summarized notes in the same order as the input list. Don't translate the notes and use the language provided in the notes. Don't use any special characters and keep the summary as short as possible. Also do not shrink the number of entries in the list. When you receive a list with 5 values then you also return a list with 5 values.\n{format_instructions}\n{notes}\n""",
+Summarize a list of note titles, retaining the main meaning of each title. Summarize each note individually, ensuring the output is concise. If a title is too short or represents a raw thought process, return it as-is. The output must be a list of unique summarized titles in the same order as the input list.
+Always ensure the number of entries in the output matches the input list. Avoid using special characters, and do not translate or alter the language of the titles.
+\n{format_instructions}\n{notes}\n""",
 	input_variables=["notes"],
 	partial_variables={"format_instructions": parser.get_format_instructions()},
 )
@@ -30,7 +31,10 @@ def get_summary(item_list):
 	# create some retry logic here
 	for i in range(3):
 		try:
-			result = chain.invoke({"notes": item_list})["notes"]
+			result = chain.invoke({"notes": item_list})
+			if isinstance(result, dict):
+				keys = list(result.keys())
+				result = result.get(keys[0])
 			if len(result) != len(item_list):
 				raise Exception("Result length does not match input length")
 			logger.info(f"Got result from langchain: {result!s}")
