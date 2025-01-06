@@ -50,7 +50,7 @@ async def dump_todoist_to_monica(update: Update, context: CallbackContext):
 	add_files_to_repository(
 		list_of_files,
 		f"obsidian-refresher: {now}",
-		f'0300_Spaces/Social Circle/Todoist-Dumps/{now.strftime("%Y-%m-%d")}/',
+		f'0300_Spaces/Social Circle/Todoist-Dumps/{now.strftime("%Y%m%d")}/',
 	)
 	await update.message.reply_text(f"Dump was done at {timestamp}")
 	await return_content(list(data.content), "All Content", update)
