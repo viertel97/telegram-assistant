@@ -6,11 +6,12 @@ from datetime import datetime, timedelta
 import speech_recognition as sr
 from quarter_lib.logging import setup_logging
 from quarter_lib_old.file_helper import delete_files
-from quarter_lib_old.transcriber import get_recognized_text
+from quarter_lib_old.transcriber import get_recognized_text, convert_to_wav
 from telegram import Update
 from telegram.ext import CallbackContext
 
 from src.helper.config_helper import is_not_correct_chat_id
+from src.services.groq_service import transcribe_groq
 from src.services.todoist_service import (
 	TODOIST_API,
 	add_to_todoist_with_file,
@@ -90,7 +91,10 @@ async def transcribe_voice(update: Update, context: CallbackContext) -> None:
 	logger.info(file_path)
 
 	modification_date = datetime.fromtimestamp(os.path.getmtime(file_path)).strftime("%d.%m.%Y %H:%M")
-	recognized_text, wav_converted_file_path = get_recognized_text(file_path)
+	wav_converted_file_path = convert_to_wav(file_path)
+	transcription_list = await transcribe_groq(wav_converted_file_path, file_function=update.message.reply_document, text_function=update.message.reply_text)
+	recognized_text = " ".join(transcription_list)
+
 	if "absatz" in recognized_text.lower():
 		phrases = recognized_text.lower().split("absatz")
 		for phrase in phrases:
