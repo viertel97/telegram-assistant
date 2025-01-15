@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import requests
+import yaml
 from quarter_lib.akeyless import get_secrets
 from quarter_lib.logging import setup_logging
 from telegram import Update
@@ -331,7 +332,7 @@ def generate_front_matter(
 	metadata_json = {k: v for k, v in metadata_json.items()}
 
 	return_string = "---\n"
-	return_string += json.dumps(metadata_json, indent=4, sort_keys=True, ensure_ascii=False)
+	return_string += yaml.dump(metadata_json, allow_unicode=False, default_flow_style=False)
 	return_string += "\n---\n\n"
 
 	return return_string
