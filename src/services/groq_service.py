@@ -55,6 +55,7 @@ def audio_to_text(filepath):
 
 
 async def transcribe_groq(audio_file, file_function, text_function, **kwargs):
+	transcription_list = []
 	chunk_files = split_wav_by_size(audio_file)
 	for chunk_file in chunk_files:
 		logger.info(f"Transcribing chunk: {chunk_file}")
@@ -78,3 +79,5 @@ async def transcribe_groq(audio_file, file_function, text_function, **kwargs):
 			**kwargs,
 		)
 		os.remove(chunk_file)
+		transcription_list.append(transcription)
+	return transcription_list
