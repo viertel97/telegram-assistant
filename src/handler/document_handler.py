@@ -1,4 +1,7 @@
+import os
+
 from quarter_lib.logging import setup_logging
+from quarter_lib_old.transcriber import convert_to_wav
 from telegram import Update
 from telegram.ext import CallbackContext
 
@@ -9,6 +12,7 @@ from src.handler.xml_handler import handle_xml
 from src.handler.zip_handler import handle_zip
 from src.helper.config_helper import is_not_correct_chat_id
 from src.helper.handler_helper import prepairing_document
+from src.services.groq_service import transcribe_groq
 
 logger = setup_logging(__file__)
 
@@ -45,6 +49,14 @@ async def handle_document(update: Update, context: CallbackContext):
 	elif mime_type == "application/pdf":
 		await update.message.reply_text("start handle_pdf")
 		await handle_pdf(file_path, file_name, update)
+	elif mime_type == "audio/ogg":
+		wav_converted_file_path = convert_to_wav(file_path)
+		transcription_list = await transcribe_groq(wav_converted_file_path,
+												   file_function=update.message.reply_document,
+												   text_function=update.message.reply_text)
+		recognized_text = " ".join(transcription_list)
+		await update.message.reply_text(recognized_text)
+		os.remove(wav_converted_file_path)
 	else:
 		logger.error("unsupported mime type: " + mime_type)
 		await update.message.reply_text("unsupported mime type: " + mime_type)
