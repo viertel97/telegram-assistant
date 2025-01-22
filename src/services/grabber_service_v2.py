@@ -163,19 +163,7 @@ def get_comments(days):
 	df_notes = df_notes[~df_notes["content"].eq("")]  # remove empty notes
 	df_notes = df_notes[df_notes.is_deleted == False]
 
-	df_notes.drop(
-		columns=[
-			"is_deleted",
-			"posted_uid",
-			"reactions",
-			"uids_to_notify",
-			"v2_id",
-			"v2_item_id",
-			"v2_project_id",
-			"file_attachment",
-		],
-		inplace=True,
-	)
+	df_notes = df_notes[['content', 'parent_id', 'created_at', 'type', 'source', 'is_completed']]
 	return df_notes
 
 
