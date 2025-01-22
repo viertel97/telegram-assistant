@@ -1,12 +1,12 @@
 import json
 import re
 import time
-import unicodedata
 from collections import defaultdict
 from datetime import datetime, timedelta
 
 import pandas as pd
 import requests
+import unicodedata
 import yaml
 from quarter_lib.akeyless import get_secrets
 from quarter_lib.logging import setup_logging
@@ -196,8 +196,10 @@ def get_items(days, df_projects, df_labels, df_notes):
 
 	exclusions = [
 		df_filtered_items["content"].str.contains("add highlight to Zotero"),
-		df_filtered_items["project"].isin(["Einkaufsliste", "Habits"]),
+
+		df_filtered_items["project"].isin(["Einkaufsliste", "Habits","Routines"]),
 		df_filtered_items["project"].str.contains("Book-Rework"),
+
 		df_filtered_items["content"].str.startswith("item not found: "),
 		df_filtered_items["content"].str.contains("nacharbeiten & Tracker pflegen"),
 		df_filtered_items["content"].str.contains(r"^.* in Zotero & Obsidian einpflegen$"),
@@ -206,6 +208,7 @@ def get_items(days, df_projects, df_labels, df_notes):
 		df_filtered_items["content"].str.contains(
 			r"^Vorherige Obsidian-Notizen aus dem Buch .* in 10 Takeaways überführen \+ Impressionen, Zitate und Bonus einpflegen$",
 		),
+		df_filtered_items["content"].str.contains("](cubox://card?id="), # remove daily/daily_cubox_reading_routine entries
 		df_filtered_items["content"].isin(
 			[
 				"Spülmaschine leeren",
