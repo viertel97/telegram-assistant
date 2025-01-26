@@ -163,7 +163,7 @@ def get_comments(days):
 	df_notes = df_notes[~df_notes["content"].eq("")]  # remove empty notes
 	df_notes = df_notes[df_notes.is_deleted == False]
 
-	df_notes = df_notes[['content', 'parent_id', 'created_at', 'type', 'source', 'is_completed']]
+	df_notes = df_notes[["content", "parent_id", "created_at", "type", "source", "is_completed"]]
 	return df_notes
 
 
@@ -193,10 +193,8 @@ def get_items(days, df_projects, df_labels, df_notes):
 		df_filtered_items["content"].str.contains(r"^.* in Zotero & Obsidian einpflegen$"),
 		df_filtered_items["content"].isin(["Hörbücher updaten + in einzelne Kapitel aufteilen + PDF runterladen"]),
 		df_filtered_items["content"].str.contains(r"^Aus Obsidian-Datei für .* Tasks generieren$"),
-		df_filtered_items["content"].str.contains(
-			r"^Vorherige Obsidian-Notizen aus dem Buch .* in 10 Takeaways überführen \+ Impressionen, Zitate und Bonus einpflegen$",
-		),
-		df_filtered_items["content"].str.contains("](cubox://card?id="), # remove daily/daily_cubox_reading_routine entries
+		df_filtered_items["content"].str.contains(r"^Vorherige Obsidian-Notizen aus dem Buch .* in 10 Takeaways überführen \+ Impressionen, Zitate und Bonus einpflegen$"),
+		df_filtered_items["content"].str.contains("](cubox://card?id=", regex=False), 		# remove daily/daily_cubox_reading_routine entries
 		df_filtered_items["content"].isin(
 			[
 				"Spülmaschine leeren",
