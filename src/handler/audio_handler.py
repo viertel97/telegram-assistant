@@ -8,6 +8,7 @@ from telegram.ext import CallbackContext
 
 from src.helper.config_helper import is_not_correct_chat_id
 from src.helper.handler_helper import prepairing_audio
+from src.helper.telegram_helper import send_long_message
 from src.services.groq_service import transcribe_groq
 
 logger = setup_logging(__file__)
@@ -38,7 +39,7 @@ async def handle_audio(update: Update, context: CallbackContext):
 												   file_function=update.message.reply_document,
 												   text_function=update.message.reply_text)
 		recognized_text = " ".join(transcription_list)
-		await update.message.reply_text(recognized_text)
+		await send_long_message(recognized_text, update.message.reply_text)
 		os.remove(wav_converted_file_path)
 	else:
 		logger.error("unsupported mime type: " + str(mime_type))

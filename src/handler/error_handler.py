@@ -6,15 +6,14 @@ import traceback
 from quarter_lib.akeyless import get_secrets
 from quarter_lib.logging import setup_logging
 from telegram import Update
-from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from todoist_api_python.api import TodoistAPI
 
 from src.helper.config_helper import CHAT_ID
+from src.helper.telegram_helper import send_long_message
 
 TODOIST_TOKEN = get_secrets("todoist/token")
 TODOIST_API = TodoistAPI(TODOIST_TOKEN)
-MAX_LENGTH_PER_MESSAGE = 4096 - 50
 
 logger = setup_logging(__file__)
 
@@ -40,12 +39,5 @@ async def handle_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> No
 		f"<pre>context.user_data = {html.escape(str(context.user_data))}</pre>\n\n"
 		f"<pre>{html.escape(tb_string)}</pre>"
 	)
-
-	if len(message) < MAX_LENGTH_PER_MESSAGE:
-		await context.bot.send_message(chat_id=CHAT_ID, text=message, parse_mode=ParseMode.HTML)
-	else:
-		messages_needed = len(message) // MAX_LENGTH_PER_MESSAGE + 1
-		for i in range(messages_needed):
-			temp = message[i * MAX_LENGTH_PER_MESSAGE : (i + 1) * MAX_LENGTH_PER_MESSAGE]
-			await context.bot.send_message(chat_id=CHAT_ID, text=temp, parse_mode=ParseMode.HTML)
+	await send_long_message(message, context.bot.send_message, chat_id=CHAT_ID)
 	time.sleep(5)

@@ -15,12 +15,12 @@ from telegram.ext import CallbackContext
 from todoist_api_python.endpoints import get_sync_url
 
 from src.helper.config_helper import is_not_correct_chat_id
+from src.helper.telegram_helper import send_long_message
 from src.services.github_service import add_files_to_repository
 from src.services.grabber_service import (
 	DEFAULT_OFFSET,
 	EASY_VOICE_RECORDER_MATCH,
 	HEADERS,
-	MAX_LENGTH_PER_MESSAGE,
 	VOICE_RECORDER_MATCH,
 	clean_api_response,
 	clean_completed_tasks,
@@ -62,13 +62,7 @@ async def return_content(content, intro, update: Update):
 	if content is not None:
 		content = "\n".join(f"* {task}" for task in content)
 		await update.message.reply_text(f"{intro}: \n\n")
-		if len(content) + 100 < MAX_LENGTH_PER_MESSAGE:
-			await update.message.reply_text(content)
-		else:
-			messages_needed = len(content) // MAX_LENGTH_PER_MESSAGE + 1
-			for i in range(messages_needed):
-				temp = content[i * MAX_LENGTH_PER_MESSAGE : (i + 1) * MAX_LENGTH_PER_MESSAGE]
-				await update.message.reply_text(temp)
+		await send_long_message(content, update.message.reply_text)
 		time.sleep(5)
 	else:
 		await update.message.reply_text(f"No {intro} found")
