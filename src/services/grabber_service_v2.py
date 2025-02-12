@@ -196,6 +196,8 @@ def get_items(days, df_projects, df_labels, df_notes):
 				"Wäsche abhängen",
 			],
 		),
+		df_filtered_items["description"].str.contains("Oldest file"),
+		df_filtered_items["description"].str.contains("Random activity file"),
 	]
 	df_filtered_items = df_filtered_items[~pd.concat(exclusions, axis=1).any(axis=1)]
 
