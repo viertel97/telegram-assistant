@@ -341,7 +341,7 @@ def create_file_from_dict(hierarchy_dict):
 		next_element_title,
 	)
 
-	content += f"# {hierarchy_dict['content']}\n\n{hierarchy_dict['description']}\n\n"
+	content += f"{hierarchy_dict['content']}\n\n{hierarchy_dict['description']}\n\n"
 
 	return {"filename": filename + ".md", "content": content}
 
