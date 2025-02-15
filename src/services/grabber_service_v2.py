@@ -1,4 +1,5 @@
 import json
+import math
 import re
 import time
 from collections import defaultdict
@@ -163,7 +164,7 @@ def get_comments(days):
 	df_notes = df_notes[~df_notes["content"].eq("")]  # remove empty notes
 	df_notes = df_notes[df_notes.is_deleted == False]
 
-	df_notes = df_notes[["content", "parent_id", "created_at", "type", "source", "is_completed"]]
+	df_notes = df_notes[["id", "content", "parent_id", "created_at", "type", "source", "is_completed"]]
 	return df_notes
 
 
@@ -194,6 +195,7 @@ def get_items(days, df_projects, df_labels, df_notes):
 		df_filtered_items["content"].isin(["Hörbücher updaten + in einzelne Kapitel aufteilen + PDF runterladen"]),
 		df_filtered_items["content"].str.contains(r"^Aus Obsidian-Datei für .* Tasks generieren$"),
 		df_filtered_items["content"].str.contains(r"^Vorherige Obsidian-Notizen aus dem Buch .* in 10 Takeaways überführen \+ Impressionen, Zitate und Bonus einpflegen$"),
+		df_filtered_items["content"].str.contains(r"^Analyse über .* zu Cubox hinzufügen und geg. lesen$"),
 		df_filtered_items["content"].str.contains("](cubox://card?id=", regex=False), 		# remove daily/daily_cubox_reading_routine entries
 		df_filtered_items["content"].isin(
 			[
@@ -292,6 +294,9 @@ def create_position_in_hierarchy(df_items):
 	df_items["parent_content"] = df_items["parent_id"].map(lambda x: id_to_content[x] if x in id_to_content else None)
 	return df_items
 
+def is_nan_or_none(value):
+	return value is None or (isinstance(value, float) and math.isnan(value))
+
 
 def generate_front_matter(
 	hierarchy_dict,
@@ -303,8 +308,8 @@ def generate_front_matter(
 	metadata_json = {
 		"up": f"[[{up_element_title}]]" if up_element_title else None,
 		"down": [f"[[{title}]]" for title in down_element_titles] if down_element_titles else [],
-		"next": f"[[{next_element_title}]]" if next_element_title else None,
-		"prev": f"[[{prev_element_title}]]" if prev_element_title else None,
+		"next": f"[[{next_element_title}]]" if not is_nan_or_none(next_element_title) else None,
+		"prev": f"[[{prev_element_title}]]" if not is_nan_or_none(prev_element_title) else None,
 		"created": hierarchy_dict["created_at_string"],
 		"slugified_title": hierarchy_dict["slugified_title"],
 		"content": hierarchy_dict["content"],
@@ -317,11 +322,10 @@ def generate_front_matter(
 		"type": hierarchy_dict["type"],
 	}
 
-	# Remove keys with None values
-	metadata_json = {k: v for k, v in metadata_json.items()}
+	metadata_json = {k: v.strip() if isinstance(v, str) else v for k, v in metadata_json.items()}
 
 	return_string = "---\n"
-	return_string += yaml.dump(metadata_json, allow_unicode=False, default_flow_style=False)
+	return_string += yaml.dump(metadata_json, allow_unicode=True, default_flow_style=False)
 	return_string += "\n---\n\n"
 
 	return return_string
@@ -341,7 +345,9 @@ def create_file_from_dict(hierarchy_dict):
 		next_element_title,
 	)
 
-	content += f"{hierarchy_dict['content']}\n\n{hierarchy_dict['description']}\n\n"
+
+	content += f"{hierarchy_dict['content']}"
+	content += f"\n\n{hierarchy_dict['description']}\n\n" if hierarchy_dict["description"] else ""
 
 	return {"filename": filename + ".md", "content": content}
 
