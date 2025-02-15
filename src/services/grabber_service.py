@@ -14,6 +14,7 @@ from todoist_api_python.endpoints import get_sync_url
 from todoist_api_python.headers import create_headers
 
 from src.helper.config_helper import is_not_correct_chat_id
+from src.helper.telegram_helper import send_long_message
 from src.services.github_service import add_todoist_dump_to_github
 from src.services.todoist_service import (
 	TODOIST_API,
@@ -25,7 +26,6 @@ TODOIST_TOKEN = get_secrets("todoist/token")
 CHECKED = "Yes"
 UNCHECKED = "No"
 DEFAULT_OFFSET = timedelta(hours=2)
-MAX_LENGTH_PER_MESSAGE = 4096
 
 VOICE_RECORDER_MATCH = r"^(([1-9]|[0-2]\d|[3][0-1])\.([1-9]|[0]\d|[1][0-2])\.[2][0]\d{2})$|^(([1-9]|[0-2]\d|[3][0-1])\.([1-9]|[0]\d|[1][0-2])\.[2][0]\d{2}\s([1-9]|[0-1]\d|[2][0-3])\:[0-5]\d.*)$"
 EASY_VOICE_RECORDER_MATCH = ".+was recorded during meditation at.+"
@@ -62,13 +62,7 @@ async def dump_todoist_to_monica(update: Update, context: CallbackContext):
 async def return_content(content, intro, update: Update):
 	if content is not None:
 		await update.message.reply_text(f"{intro}: \n\n")
-		if len(content) < MAX_LENGTH_PER_MESSAGE:
-			await update.message.reply_text(content)
-		else:
-			messages_needed = len(content) // MAX_LENGTH_PER_MESSAGE + 1
-			for i in range(messages_needed):
-				temp = content[i * MAX_LENGTH_PER_MESSAGE : (i + 1) * MAX_LENGTH_PER_MESSAGE]
-				await update.message.reply_text(temp)
+		await send_long_message(content, update.message.reply_text)
 		time.sleep(5)
 	else:
 		await update.message.reply_text(f"No {intro} found")
