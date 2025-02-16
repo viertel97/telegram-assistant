@@ -301,10 +301,14 @@ def generate_front_matter(
 	prev_element_title=None,
 	next_element_title=None,
 ):
-	if hierarchy_dict["content"].startswith("LLM:"):
-		llm_content = hierarchy_dict["content"].split("\n")[0]
+	if hierarchy_dict["content"].startswith("LLM:") or hierarchy_dict["source"] == "GHT":
+		updated_content = hierarchy_dict["content"].split("\n")[0]
+		if len(updated_content) > 100:
+			updated_content = hierarchy_dict["summary"]
+			if len(updated_content) > 100:
+				updated_content = hierarchy_dict["summary"][:100] + "..."
 	else:
-		llm_content = None
+		updated_content = None
 
 	metadata_json = {
 		"up": f"[[{up_element_title}]]" if up_element_title else None,
@@ -313,7 +317,7 @@ def generate_front_matter(
 		"prev": f"[[{prev_element_title}]]" if not is_nan_or_none(prev_element_title) else None,
 		"created": hierarchy_dict["created_at_string"],
 		"slugified_title": hierarchy_dict["slugified_title"],
-		"content": hierarchy_dict["content"] if llm_content is None else llm_content,
+		"content": hierarchy_dict["content"] if updated_content is None else updated_content,
 		"summary": hierarchy_dict["summary"],
 		"description": hierarchy_dict["description"],
 		"project": hierarchy_dict["project"],
@@ -327,7 +331,7 @@ def generate_front_matter(
 
 	return_string = "---\n"
 	return_string += yaml.dump(metadata_json, allow_unicode=True, default_flow_style=False)
-	return_string += "\n---\n\n"
+	return_string += "---\n\n"
 
 	return return_string
 
