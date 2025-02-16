@@ -301,6 +301,11 @@ def generate_front_matter(
 	prev_element_title=None,
 	next_element_title=None,
 ):
+	if hierarchy_dict["content"].startswith("LLM:"):
+		llm_content = hierarchy_dict["content"].split("\n")[0]
+	else:
+		llm_content = None
+
 	metadata_json = {
 		"up": f"[[{up_element_title}]]" if up_element_title else None,
 		"down": [f"[[{title}]]" for title in down_element_titles] if down_element_titles else [],
@@ -308,7 +313,7 @@ def generate_front_matter(
 		"prev": f"[[{prev_element_title}]]" if not is_nan_or_none(prev_element_title) else None,
 		"created": hierarchy_dict["created_at_string"],
 		"slugified_title": hierarchy_dict["slugified_title"],
-		"content": hierarchy_dict["content"],
+		"content": hierarchy_dict["content"] if llm_content is None else llm_content,
 		"summary": hierarchy_dict["summary"],
 		"description": hierarchy_dict["description"],
 		"project": hierarchy_dict["project"],
