@@ -14,6 +14,7 @@ from src.helper.config_helper import is_not_correct_chat_id
 from src.helper.handler_helper import prepairing_document
 from src.helper.telegram_helper import send_long_message
 from src.services.groq_service import transcribe_groq
+from src.services.todoist_service import add_to_todoist_with_file
 
 logger = setup_logging(__file__)
 
@@ -57,6 +58,7 @@ async def handle_document(update: Update, context: CallbackContext):
 												   text_function=update.message.reply_text)
 		recognized_text = " ".join(transcription_list)
 		await send_long_message(recognized_text, update.message.reply_text)
+		await add_to_todoist_with_file(f"{update.message.document.file_name} transcription", file_path=wav_converted_file_path,description=recognized_text)
 		os.remove(wav_converted_file_path)
 	else:
 		logger.error("unsupported mime type: " + mime_type)

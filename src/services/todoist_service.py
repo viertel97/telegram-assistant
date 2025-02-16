@@ -22,7 +22,7 @@ logger = setup_logging(__file__)
 TODOIST_TOKEN = get_secrets("todoist/token")
 TODOIST_API = TodoistAPI(TODOIST_TOKEN)
 HEADERS = create_headers(token=TODOIST_TOKEN)
-
+COMPLETE_TASKS_LIMIT = 200
 
 def run_todoist_sync_commands(commands):
 	for command in commands:
@@ -47,8 +47,8 @@ def add_to_todoist_with_description(text, description, project_id=None):
 		move_item_to_project(item.id, project_id=project_id)
 
 
-async def add_to_todoist_with_file(final_message, file_path, project_id=None):
-	item = TODOIST_API.add_task(final_message, project_id=project_id)
+async def add_to_todoist_with_file(final_message, file_path, project_id=None, description=None):
+	item = TODOIST_API.add_task(final_message, project_id=project_id, description=description)
 	add_note_with_attachement(task_id=item.id, file_path=file_path)
 
 
@@ -98,16 +98,29 @@ def get_rework_projects(project_name_start_with):
 
 
 def get_completed_tasks(since: datetime):
-	response = requests.post(
-		get_sync_url("completed/get_all"),
-		data={
-			"annotate_notes": True,
-			"annotate_items": True,
-			"since": since.strftime("%Y-%m-%dT%H:%M:%S"),
-		},
-		headers=HEADERS,
-	).json()
-	response["items"] = [
+	offset = 0
+	all_items = []
+
+	while True:
+		response = requests.post(
+			get_sync_url("completed/get_all"),
+			data={
+				"annotate_notes": True,
+				"annotate_items": True,
+				"since": since.strftime("%Y-%m-%dT%H:%M:%S"),
+				"limit": COMPLETE_TASKS_LIMIT,
+				"offset": offset,
+			},
+			headers=HEADERS,
+		).json()
+
+		all_items.extend(response["items"])
+		if len(response["items"]) < COMPLETE_TASKS_LIMIT:
+			break
+		offset += COMPLETE_TASKS_LIMIT
+
+
+	all_items = [
 		{
 			k: v
 			for k, v in item.items()
@@ -123,6 +136,6 @@ def get_completed_tasks(since: datetime):
 				"v2_section_id",
 			]
 		}
-		for item in response["items"]
+		for item in all_items
 	]
-	return response
+	return all_items

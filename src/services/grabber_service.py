@@ -88,7 +88,7 @@ def clean_api_response(api_response):
 
 
 def clean_completed_tasks(api_response):
-	df = pd.DataFrame(api_response["items"])
+	df = pd.DataFrame(api_response)
 	df_concat = pd.concat([df.drop(["item_object"], axis=1), pd.json_normalize(df["item_object"])], axis=1)
 	df_concat.drop(
 		[

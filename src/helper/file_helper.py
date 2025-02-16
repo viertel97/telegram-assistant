@@ -9,4 +9,4 @@ def delete_files(files):
 		try:
 			os.remove(file)
 		except:
-			logger.error("Error while deleting file : ", file)
+			logger.error("Error while deleting file : ", str(file))
