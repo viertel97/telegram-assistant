@@ -8,7 +8,7 @@ from telegram import Update
 from telegram.ext import CallbackContext
 
 from src.helper.config_helper import is_not_correct_chat_id
-from src.helper.telegram_helper import retry_on_error
+from src.helper.telegram_helper import retry_on_error, send_long_message
 from src.services.groq_service import transcribe_groq
 from src.services.microsoft_service import get_access_token, get_file_list
 
@@ -44,7 +44,9 @@ async def handle_text(update: Update, context: CallbackContext):
 			text="done downloading - start transcribing",
 		)
 		# await transcribe(f, file_info, update)
-	await transcribe_groq("input.wav", file_function=update.message.reply_document, text_function=update.message.reply_text)
+	transcription_list = await transcribe_groq("input.wav", file_function=update.message.reply_document, text_function=update.message.reply_text)
+	recognized_text = " ".join(transcription_list)
+	await send_long_message(recognized_text, update.message.reply_text)
 	await update.message.reply_text("done transcribing of " + file_info["file"]["name"])
 	os.remove("input.wav")
 

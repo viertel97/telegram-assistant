@@ -5,6 +5,7 @@ from quarter_lib.logging import setup_logging
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import CallbackContext
 
+from src.handler.text_handler import extract_info
 from src.helper.config_helper import is_not_correct_chat_id
 from src.services.groq_service import transcribe_groq
 from src.services.microsoft_service import (
@@ -27,10 +28,15 @@ async def get_last_calls(update: Update, context: CallbackContext):
 	files = [file for file in files if "@microsoft.graph.downloadUrl" in file.keys()]
 	for file in files:
 		file["sortCreatedDatetime"] = parser.parse(file["createdDateTime"])
+		file["info"] = extract_info(file["name"])
+		if file["info"]["contact_name"]:
+			file["readable"] = f"{file['sortCreatedDatetime'].strftime('%d.%m.%Y %H:%M:%S')} - {file['info']['contact_name']} ({file['info']['call_type']})"
+		else:
+			file["readable"] = f"{file['sortCreatedDatetime'].strftime('%d.%m.%Y %H:%M:%S')} - {file['info']['contact_number']} ({file['info']['call_type']})"
 
 	files = sorted(files, key=lambda x: x["sortCreatedDatetime"], reverse=True)
 
-	reply_keyboard = [[InlineKeyboardButton(file["name"], callback_data=str(file["id"]))] for file in files[:20]]
+	reply_keyboard = [[InlineKeyboardButton(file["readable"], callback_data=str(file["id"]))] for file in files[:20]]
 	reply_markup = InlineKeyboardMarkup(reply_keyboard)
 
 	await update.message.reply_text("Please choose:", reply_markup=reply_markup)
