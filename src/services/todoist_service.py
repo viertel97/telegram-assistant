@@ -17,6 +17,7 @@ from quarter_lib_old.todoist import (
 from todoist_api_python.api import TodoistAPI
 from todoist_api_python.endpoints import get_sync_url
 from todoist_api_python.headers import create_headers
+from todoist_api_python.models import Task
 
 logger = setup_logging(__file__)
 TODOIST_TOKEN = get_secrets("todoist/token")
@@ -32,19 +33,23 @@ def run_todoist_sync_commands(commands):
 	return run_sync_commands(commands)
 
 
-def add_to_todoist(text, project_id=None):
+def add_to_todoist(text, project_id=None) -> Task:
 	item = TODOIST_API.add_task(text)
 	if project_id:
 		move_item_to_project(item.id, project_id)
+	return item
 
+def add_comment_to_task(task_id, comment):
+	return TODOIST_API.add_comment(task_id=task_id, content=comment)
 
 def add_to_todoist_with_description(text, description, project_id=None):
 	item = TODOIST_API.add_task(
-		text,
+		content=text,
 		description=description,
 	)
 	if project_id:
 		move_item_to_project(item.id, project_id=project_id)
+	return item
 
 
 async def add_to_todoist_with_file(final_message, file_path, project_id=None, description=None):

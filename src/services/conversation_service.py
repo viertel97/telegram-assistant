@@ -7,12 +7,18 @@ from telegram.ext import CallbackContext
 
 from src.handler.text_handler import extract_info
 from src.helper.config_helper import is_not_correct_chat_id
+from src.helper.telegram_helper import send_long_message
 from src.services.groq_service import transcribe_groq
 from src.services.microsoft_service import (
 	download_file_by_id,
 	get_access_token,
 	get_file_list,
 )
+from src.services.todoist_service import add_to_todoist_with_file, add_to_todoist_with_description, add_to_todoist, \
+	add_comment_to_task
+
+MAX_COMMENT_LENGTH = 14000
+MAX_DESCRIPTION_LENGTH = 16000
 
 logger = setup_logging(__file__)
 
@@ -62,9 +68,24 @@ async def transcribe_call_from_one_drive(update: Update, context: CallbackContex
 	)
 	download_file_by_id(data["id"], "input.wav")
 
-	await transcribe_groq(
-		"input.wav", file_function=context.bot.send_document, text_function=context.bot.send_message, chat_id=update.effective_chat.id,
+	transcription_list = await transcribe_groq(
+		"input.wav", file_function=context.bot.send_document, text_function=context.bot.send_message,
+		prompt="Die Audio ist ein Telefonat zwischen zwei Menschen", chat_id=update.effective_chat.id,
 	)
+	content = " ".join(transcription_list)
+
+	await send_long_message(content, context.bot.send_message, chat_id=update.effective_chat.id)
 
 	await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Done transcribing of {data['name']}")
+
+	if len(content) > MAX_DESCRIPTION_LENGTH:
+		item = add_to_todoist(f"Transcribe {data['name']}")
+		chunks = [content[i:i + MAX_COMMENT_LENGTH] for i in range(0, len(content), MAX_COMMENT_LENGTH)]
+		for chunk in chunks:
+			add_comment_to_task(item.id, chunk)
+
+	else:
+		add_to_todoist_with_description(f"Transcribe {data['name']}", content)
+
+	await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Added to Todoist")
 	os.remove("input.wav")
