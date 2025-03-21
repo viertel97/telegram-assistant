@@ -45,17 +45,21 @@ def split_wav_by_size(input_file, max_chunk_size_mb=20):
 	return files
 
 
-def audio_to_text(filepath, prompt):
+def audio_to_text(filepath, prompt=None):
 	with open(filepath, "rb") as file:
-		translation = CLIENT.audio.transcriptions.create(
-			file=(filepath, file.read()),
-			model=MODEL,
-			prompt=prompt,
-		)
+		params = {
+			"file": (filepath, file.read()),
+			"model": MODEL,
+		}
+		if prompt is not None:
+			params["prompt"] = prompt  # Only add if set
+
+		translation = CLIENT.audio.transcriptions.create(**params)
+
 	return translation.text
 
 
-async def transcribe_groq(audio_file, file_function, text_function, prompt, **kwargs):
+async def transcribe_groq(audio_file, file_function, text_function, prompt=None, **kwargs):
 	transcription_list = []
 	chunk_files = split_wav_by_size(audio_file)
 	for chunk_file in chunk_files:
