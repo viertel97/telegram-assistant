@@ -31,8 +31,6 @@ from src.services.todoist_service import TODOIST_API, get_completed_tasks, get_d
 
 logger = setup_logging(__file__)
 
-days_to_dump = 1
-
 GHT_MATCH = r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\+\d{2}:\d{2}: "
 
 
@@ -46,7 +44,7 @@ async def dump_todoist_to_monica(update: Update, context: CallbackContext):
 	await update.message.reply_text("Starting Todoist dump V2")
 	logger.info("starting Todoist dump to Monica")
 	days_to_dump = int(context.args[0]) if context.args else 3
-	data, list_of_files = get_grabber_data(days_to_dump)
+	df_items, list_of_files = get_grabber_data(days_to_dump)
 	now = datetime.now()
 	timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
 	add_files_to_repository(
@@ -54,10 +52,16 @@ async def dump_todoist_to_monica(update: Update, context: CallbackContext):
 		f"obsidian-refresher: {now}",
 		f'0300_Spaces/Social Circle/Todoist-Dumps/{now.strftime("%Y%m%d")}/',
 	)
+	set_finished_label(df_items)
 	await update.message.reply_text(f"Dump was done at {timestamp}")
-	await return_content(list(data.content), "All Content", update)
+	await return_content(list(df_items.content), "All Content", update)
 	logger.info("Done Todoist dump to Monica")
 
+def set_finished_label(df_items):
+	for index, file in df_items.iterrows():
+		if file["type"] == "task":
+			TODOIST_API.update_task(file["id"], labels=["dumped"])
+	logger.info("Finished label set")
 
 async def return_content(content, intro, update: Update):
 	if content is not None:
@@ -229,12 +233,12 @@ def get_items(days, df_projects, df_labels, df_notes):
 			"assigner_id",
 			"comment_count",
 			"creator_id",
+			"task_id",
 			"due",
 			"url",
 			"sync_id",
 			"duration",
 			"order",
-			"task_id",
 			"project_id",
 			"section_id",
 			"notes",
@@ -288,6 +292,8 @@ def create_position_in_hierarchy(df_items):
 	)
 
 	df_items["parent_content"] = df_items["parent_id"].map(lambda x: id_to_content[x] if x in id_to_content else None)
+
+	df_items.reset_index(inplace=True)
 	return df_items
 
 def is_nan_or_none(value):
@@ -325,6 +331,7 @@ def generate_front_matter(
 		"tags": hierarchy_dict["labels"],
 		"is_completed": hierarchy_dict["is_completed"],
 		"type": hierarchy_dict["type"],
+		"id": hierarchy_dict["id"] if not is_nan_or_none(hierarchy_dict["id"]) else None,
 	}
 
 	metadata_json = {k: v.strip() if isinstance(v, str) else v for k, v in metadata_json.items()}
