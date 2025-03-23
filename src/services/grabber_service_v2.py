@@ -175,10 +175,10 @@ def get_items(days, df_projects, df_labels, df_notes):
 	start_date = (datetime.today() - timedelta(days=days)).strftime("%Y-%m-%d")
 	df_filtered_items = df_items[df_items["created_at"] >= start_date]
 
-	df_items["labels"] = df_items["labels"].apply(lambda x: get_labels(x, df_labels))
-
 	exclusions = [
 		df_filtered_items["content"].str.contains("add highlight to Zotero"),
+
+		df_filtered_items["labels"].apply(lambda x: "filtered" in x), # first thought about "transcription", but this one is more precise and not all transcriptions should be filtered out
 
 		df_filtered_items["project"].isin(["Einkaufsliste", "Habits","Routines"]),
 		df_filtered_items["project"].str.contains("Book-Rework"),

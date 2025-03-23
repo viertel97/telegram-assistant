@@ -52,8 +52,8 @@ def add_to_todoist_with_description(text, description, project_id=None):
 	return item
 
 
-async def add_to_todoist_with_file(final_message, file_path, project_id=None, description=None):
-	item = TODOIST_API.add_task(final_message, project_id=project_id, description=description)
+async def add_to_todoist_with_file(final_message, file_path, project_id=None, description=None, labels=None):
+	item = TODOIST_API.add_task(final_message, project_id=project_id, description=description, labels=labels)
 	add_note_with_attachement(task_id=item.id, file_path=file_path)
 
 

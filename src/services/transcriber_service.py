@@ -102,17 +102,17 @@ async def transcribe_voice(update: Update, context: CallbackContext) -> None:
 			await update.message.reply_text(final_message)
 			if "einkaufsliste" in phrase.lower():
 				final_message = phrase.replace("Einkaufsliste", "").replace("auf", "").replace("der", "").replace(" ", "")
-				await add_to_todoist_with_file(final_message, file_path, project_id="2247224944")
+				await add_to_todoist_with_file(final_message, file_path, project_id="2247224944", labels=["transcription"])
 			else:
-				await add_to_todoist_with_file(final_message, file_path)
+				await add_to_todoist_with_file(final_message, file_path, labels=["transcription"])
 
 	else:
 		final_message = modification_date + " : " + recognized_text
 		if "einkaufsliste" in recognized_text.lower():
 			final_message = recognized_text.replace("Einkaufsliste", "").replace("auf", "").replace("der", "").replace(" ", "")
-			await add_to_todoist_with_file(final_message, file_path, project_id="2247224944")
+			await add_to_todoist_with_file(final_message, file_path, project_id="2247224944", labels=["transcription"])
 		else:
-			await add_to_todoist_with_file(final_message, file_path)
+			await add_to_todoist_with_file(final_message, file_path, labels=["transcription"])
 		await update.message.reply_text(final_message)
 	delete_files([file_path, wav_converted_file_path])
 	logger.info("end: Voice to text")
