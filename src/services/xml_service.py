@@ -8,7 +8,7 @@ from src.services.logging_service import log_to_telegram
 logger = setup_logging(__file__)
 
 
-async def xml_to_dict(data, update:Update) -> list:
+async def xml_to_dict(data, update: Update) -> list:
 	root = ET.XML(data)
 	data = []
 	for item in root.findall("./bookmark"):  # find all projects node

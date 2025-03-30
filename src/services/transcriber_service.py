@@ -92,7 +92,9 @@ async def transcribe_voice(update: Update, context: CallbackContext) -> None:
 
 	modification_date = datetime.fromtimestamp(os.path.getmtime(file_path)).strftime("%d.%m.%Y %H:%M")
 	wav_converted_file_path = convert_to_wav(file_path)
-	transcription_list = await transcribe_groq(wav_converted_file_path, file_function=update.message.reply_document, text_function=update.message.reply_text)
+	transcription_list = await transcribe_groq(
+		wav_converted_file_path, file_function=update.message.reply_document, text_function=update.message.reply_text
+	)
 	recognized_text = " ".join(transcription_list)
 
 	if "absatz" in recognized_text.lower():

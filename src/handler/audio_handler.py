@@ -39,9 +39,9 @@ async def handle_audio(update: Update, context: CallbackContext):
 	elif mime_type == "audio/ogg" or mime_type == "audio/mpeg":
 		await update.message.reply_text("start transcribe_groq")
 		wav_converted_file_path = convert_to_wav(file_path)
-		transcription_list = await transcribe_groq(wav_converted_file_path,
-												   file_function=update.message.reply_document,
-												   text_function=update.message.reply_text)
+		transcription_list = await transcribe_groq(
+			wav_converted_file_path, file_function=update.message.reply_document, text_function=update.message.reply_text
+		)
 		recognized_text = " ".join(transcription_list)
 		await send_long_message(recognized_text, update.message.reply_text)
 		os.remove(wav_converted_file_path)

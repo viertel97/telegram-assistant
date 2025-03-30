@@ -25,6 +25,7 @@ TODOIST_API = TodoistAPI(TODOIST_TOKEN)
 HEADERS = create_headers(token=TODOIST_TOKEN)
 COMPLETE_TASKS_LIMIT = 200
 
+
 def run_todoist_sync_commands(commands):
 	for command in commands:
 		command["uuid"] = str(uuid.uuid4())
@@ -39,8 +40,10 @@ def add_to_todoist(text, project_id=None) -> Task:
 		move_item_to_project(item.id, project_id)
 	return item
 
+
 def add_comment_to_task(task_id, comment):
 	return TODOIST_API.add_comment(task_id=task_id, content=comment)
+
 
 def add_to_todoist_with_description(text, description, project_id=None):
 	item = TODOIST_API.add_task(
@@ -123,7 +126,6 @@ def get_completed_tasks(since: datetime):
 		if len(response["items"]) < COMPLETE_TASKS_LIMIT:
 			break
 		offset += COMPLETE_TASKS_LIMIT
-
 
 	all_items = [
 		{

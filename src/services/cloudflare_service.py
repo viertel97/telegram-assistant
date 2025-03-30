@@ -45,7 +45,7 @@ async def toggle_ips(update: Update, context: CallbackContext):
 
 	for dns_entry in current_dns_entries:
 		temp = requests.put(
-			f'https://api.cloudflare.com/client/v4/zones/{CLOUDFLARE_ZONE_ID}/dns_records/{dns_entry["id"]}',
+			f"https://api.cloudflare.com/client/v4/zones/{CLOUDFLARE_ZONE_ID}/dns_records/{dns_entry['id']}",
 			headers=HEADERS,
 			json={
 				"name": dns_entry["name"],

@@ -14,8 +14,7 @@ from src.services.microsoft_service import (
 	get_access_token,
 	get_file_list,
 )
-from src.services.todoist_service import add_to_todoist_with_file, add_to_todoist_with_description, add_to_todoist, \
-	add_comment_to_task
+from src.services.todoist_service import add_comment_to_task, add_to_todoist, add_to_todoist_with_description
 
 MAX_COMMENT_LENGTH = 14000
 MAX_DESCRIPTION_LENGTH = 16000
@@ -36,9 +35,13 @@ async def get_last_calls(update: Update, context: CallbackContext):
 		file["sortCreatedDatetime"] = parser.parse(file["createdDateTime"])
 		file["info"] = extract_info(file["name"])
 		if file["info"]["contact_name"]:
-			file["readable"] = f"{file['sortCreatedDatetime'].strftime('%d.%m.%Y %H:%M:%S')} - {file['info']['contact_name']} ({file['info']['call_type']})"
+			file["readable"] = (
+				f"{file['sortCreatedDatetime'].strftime('%d.%m.%Y %H:%M:%S')} - {file['info']['contact_name']} ({file['info']['call_type']})"
+			)
 		else:
-			file["readable"] = f"{file['sortCreatedDatetime'].strftime('%d.%m.%Y %H:%M:%S')} - {file['info']['contact_number']} ({file['info']['call_type']})"
+			file["readable"] = (
+				f"{file['sortCreatedDatetime'].strftime('%d.%m.%Y %H:%M:%S')} - {file['info']['contact_number']} ({file['info']['call_type']})"
+			)
 
 	files = sorted(files, key=lambda x: x["sortCreatedDatetime"], reverse=True)
 
@@ -49,6 +52,9 @@ async def get_last_calls(update: Update, context: CallbackContext):
 
 
 async def transcribe_call_from_one_drive(update: Update, context: CallbackContext):
+	if is_not_correct_chat_id(update.message.chat_id):
+		await update.message.reply_text("Nah")
+		return
 	logger.info("start: Call to text")
 	query = update.callback_query
 	file_id = query.data
@@ -69,8 +75,11 @@ async def transcribe_call_from_one_drive(update: Update, context: CallbackContex
 	download_file_by_id(data["id"], "input.wav")
 
 	transcription_list = await transcribe_groq(
-		"input.wav", file_function=context.bot.send_document, text_function=context.bot.send_message,
-		prompt="No translation, just transcription", chat_id=update.effective_chat.id,
+		"input.wav",
+		file_function=context.bot.send_document,
+		text_function=context.bot.send_message,
+		prompt="The audio is a phone call between two people. Do not translate the call to another language - just transcription",
+		chat_id=update.effective_chat.id,
 	)
 	content = " ".join(transcription_list)
 
@@ -80,7 +89,7 @@ async def transcribe_call_from_one_drive(update: Update, context: CallbackContex
 
 	if len(content) > MAX_DESCRIPTION_LENGTH:
 		item = add_to_todoist(f"Transcribe {data['name']}")
-		chunks = [content[i:i + MAX_COMMENT_LENGTH] for i in range(0, len(content), MAX_COMMENT_LENGTH)]
+		chunks = [content[i : i + MAX_COMMENT_LENGTH] for i in range(0, len(content), MAX_COMMENT_LENGTH)]
 		for chunk in chunks:
 			add_comment_to_task(item.id, chunk)
 

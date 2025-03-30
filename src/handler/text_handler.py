@@ -44,7 +44,9 @@ async def handle_text(update: Update, context: CallbackContext):
 			text="done downloading - start transcribing",
 		)
 		# await transcribe(f, file_info, update)
-	transcription_list = await transcribe_groq("input.wav", file_function=update.message.reply_document, text_function=update.message.reply_text)
+	transcription_list = await transcribe_groq(
+		"input.wav", file_function=update.message.reply_document, text_function=update.message.reply_text
+	)
 	recognized_text = " ".join(transcription_list)
 	await send_long_message(recognized_text, update.message.reply_text)
 	await update.message.reply_text("done transcribing of " + file_info["file"]["name"])
