@@ -13,7 +13,6 @@ from telegram.ext import (
 from handler.audio_handler import handle_audio
 from handler.command_handler import (
 	add_splitwise_placeholder,
-	dump_todoist_to_monica,
 	dump_todoist_to_monica_v2,
 	toggle_cloudflare_ips,
 	wol,
@@ -38,7 +37,6 @@ def get_command_handler():
 	return (
 		CommandHandler("start", start),
 		CommandHandler("wol", wol),
-		CommandHandler("dump_todoist_to_monica", dump_todoist_to_monica),
 		CommandHandler("dump_todoist_to_monica_v2", dump_todoist_to_monica_v2),
 		CommandHandler("toggle_cloudflare_ips", toggle_cloudflare_ips),
 		CommandHandler("add_splitwise_placeholder", add_splitwise_placeholder),
@@ -54,8 +52,8 @@ def get_message_handler():
 	return (
 		MessageHandler(filters.VOICE, voice_to_text),
 		MessageHandler(filters.VIDEO, video_to_text),
-		MessageHandler(filters.Document.ALL, handle_document),
 		MessageHandler(filters.AUDIO, handle_audio),
+		MessageHandler(filters.Document.ALL, handle_document),
 		MessageHandler(filters.TEXT, handle_text),
 	)
 
