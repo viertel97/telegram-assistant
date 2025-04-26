@@ -52,7 +52,7 @@ async def get_last_calls(update: Update, context: CallbackContext):
 
 
 async def transcribe_call_from_one_drive(update: Update, context: CallbackContext):
-	if is_not_correct_chat_id(update.message.chat_id):
+	if is_not_correct_chat_id(update.callback_query.message.chat_id):
 		await update.message.reply_text("Nah")
 		return
 	logger.info("start: Call to text")
