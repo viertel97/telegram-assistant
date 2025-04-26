@@ -29,7 +29,9 @@ def set_finished_label(df_items: pd.DataFrame, now: datetime):
 	tag_name = f"dumped-{now.strftime('%Y%m%d')}"
 	for index, file in df_items.iterrows():
 		if file["type"] == "task":
-			TODOIST_API.update_task(file["id"], labels=[tag_name])
+			labels = file["labels"] if file["labels"] else []
+			labels.append(tag_name)
+			TODOIST_API.update_task(file["id"], labels=labels)
 	logger.info("Finished label set")
 
 
