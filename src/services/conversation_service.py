@@ -88,7 +88,7 @@ async def transcribe_call_from_one_drive(update: Update, context: CallbackContex
 	await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Done transcribing of {data['name']}")
 
 	if len(content) > MAX_DESCRIPTION_LENGTH:
-		item = add_to_todoist(f"Transcribe {data['name']}")
+		item = add_to_todoist(f"Transcribe {data['name']}", labels=["filtered"])
 		chunks = [content[i : i + MAX_COMMENT_LENGTH] for i in range(0, len(content), MAX_COMMENT_LENGTH)]
 		for chunk in chunks:
 			add_comment_to_task(item.id, chunk)
