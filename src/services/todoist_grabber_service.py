@@ -85,6 +85,7 @@ def get_items(days, df_projects, df_labels, df_notes):
 		df_filtered_items["project"].str.contains("Book-Rework"),
 		df_filtered_items["content"].str.startswith("item not found: "),
 		df_filtered_items["content"].str.contains("nacharbeiten & Tracker pflegen"),
+		df_filtered_items["content"].str.contains("§§§ Obsidian-Notiz überarbeiten"),
 		df_filtered_items["content"].str.contains(r"^.* in Zotero & Obsidian einpflegen$"),
 		df_filtered_items["content"].isin(["Hörbücher updaten + in einzelne Kapitel aufteilen + PDF runterladen"]),
 		df_filtered_items["content"].str.contains(r"^Aus Obsidian-Datei für .* Tasks generieren$"),

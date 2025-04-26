@@ -34,8 +34,8 @@ def run_todoist_sync_commands(commands):
 	return run_sync_commands(commands)
 
 
-def add_to_todoist(text, project_id=None) -> Task:
-	item = TODOIST_API.add_task(text)
+def add_to_todoist(text, project_id=None, labels=None) -> Task:
+	item = TODOIST_API.add_task(text, labels=labels)
 	if project_id:
 		move_item_to_project(item.id, project_id)
 	return item

@@ -18,7 +18,7 @@ parser = JsonOutputParser()
 prompt = PromptTemplate(
 	template="""
 Summarize a list of note titles, retaining the main meaning of each title. Summarize each note individually, ensuring the output is concise. If a title is too short or represents a raw thought process, return it as-is. The output must be a list of unique summarized titles in the same order as the input list.
-Always ensure the number of entries in the output matches the input list. Avoid using special characters, and do not translate or alter the language of the titles.
+Always ensure the number of entries in the output matches the input list - even if entries are duplicates. Avoid using special characters, and do not translate or alter the language of the titles.
 \n{format_instructions}\n{notes}\n""",
 	input_variables=["notes"],
 	partial_variables={"format_instructions": parser.get_format_instructions()},
