@@ -31,6 +31,7 @@ def run_todoist_sync_commands(commands):
 		command["uuid"] = str(uuid.uuid4())
 		if not command.get("temp_id"):
 			command["temp_id"] = str(uuid.uuid4())
+	logger.info(f"Running {len(commands)} commands: {commands}")
 	return run_sync_commands(commands)
 
 

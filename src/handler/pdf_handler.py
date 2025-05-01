@@ -123,7 +123,7 @@ async def handle_pdf(file_path, file_name, update: Update):
 		if response.status_code != 200:
 			await log_to_telegram("Error while syncing todoist", logger, update)
 		else:
-			await log_to_telegram("synced todoist with positive response", logger, update)
+			await log_to_telegram(f"synced todoist with positive response: {response} - {response.text}", logger, update)
 
 		to_delete.append(file_path)
 		to_delete.append(new_file_path)
