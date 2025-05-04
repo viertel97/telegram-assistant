@@ -20,9 +20,11 @@ async def handle_text(update: Update, context: CallbackContext):
 		await update.message.reply_text("Nah")
 		return
 	await update.message.reply_text("start handle_text")
-	text = update.message.text
+	await handle_transcription(update, context)
+
+async def handle_transcription(update: Update, context: CallbackContext):
 	try:
-		file_info = extract_info(text)
+		file_info = extract_info(update.message.text)
 		await retry_on_error(update.message.reply_text, retry=5, wait=0.1, text=str(file_info))
 	except Exception as e:
 		logger.error(e)
@@ -43,7 +45,7 @@ async def handle_text(update: Update, context: CallbackContext):
 			wait=0.1,
 			text="done downloading - start transcribing",
 		)
-		# await transcribe(f, file_info, update)
+	# await transcribe(f, file_info, update)
 	transcription_list = await transcribe_groq(
 		"input.wav", file_function=update.message.reply_document, text_function=update.message.reply_text
 	)
@@ -51,7 +53,6 @@ async def handle_text(update: Update, context: CallbackContext):
 	await send_long_message(recognized_text, update.message.reply_text)
 	await update.message.reply_text("done transcribing of " + file_info["file"]["name"])
 	os.remove("input.wav")
-
 
 def find_file(file_list, file_name):
 	for file in file_list:

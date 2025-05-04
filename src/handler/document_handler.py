@@ -6,6 +6,7 @@ from telegram import Update
 from telegram.ext import CallbackContext
 
 from src.handler.excel_handler import handle_excel
+from src.handler.json_handler import handle_json
 from src.handler.markdown_handler import handle_markdown
 from src.handler.pdf_handler import handle_pdf
 from src.handler.xml_handler import handle_xml
@@ -44,6 +45,10 @@ async def handle_document(update: Update, context: CallbackContext):
 	elif mime_type == "text/markdown":
 		await update.message.reply_text("start handle_markdown")
 		await handle_markdown(file_path, file_name, update)
+	elif mime_type == "application/json":
+		await update.message.reply_text("start handle_json")
+		done_message = await handle_json(file_path, file_name, update)
+		await update.message.reply_text(done_message)
 	elif mime_type == "text/xml" or mime_type == "application/xml":
 		await update.message.reply_text("start handle_xml")
 		done_message = await handle_xml(file_path, file_name, update)
