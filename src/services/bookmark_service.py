@@ -9,6 +9,7 @@ from telegram import Update
 
 from src.helper.file_helper import delete_files
 from src.helper.telegram_helper import retry_on_error
+from src.services.groq_service import transcribe_groq
 from src.services.logging_service import log_to_telegram
 from src.services.microsoft_service import download_file_from_path
 from src.services.todoist_service import add_file_to_todoist
@@ -60,21 +61,15 @@ async def get_bookmark_transcriptions(xml_data, caption, update: Update):
 			)
 			upload_result = await add_file_to_todoist(temp_file_name)
 			logger.info(f"uploaded file '{temp_file_name}' to todoist")
-			r_file = sr.AudioFile(temp_file_name)
-			with r_file as source:
-				audio = r.record(source)
 
 			logger.info("transcribing audio segment from file: " + file_name + " at position: " + str(file_position) + " in de-DE & en-US")
 
-			recognized_text_de, recognized_text_en = audio_to_text(audio)
-
-			await retry_on_error(
-				update.message.reply_text,
-				retry=5,
-				wait=0.1,
-				text=f"de: {recognized_text_de['transcript']} ({recognized_text_de['confidence']})\n en: {recognized_text_en['transcript']} ({recognized_text_en['confidence']})",
-				disable_notification=True,
+			transcription_list = await transcribe_groq(
+				temp_file_name,
+				file_function=update.message.reply_document,
+				text_function=update.message.reply_text,
 			)
+			recognized_text = "".join(transcription_list).strip()
 
 			if "title" in row.keys() and row["title"] is not None:
 				result_timestamp = datetime.strptime(row["title"], "%Y-%m-%dT%H:%M:%S%z")
@@ -90,10 +85,8 @@ async def get_bookmark_transcriptions(xml_data, caption, update: Update):
 					"title": temp_file_name,
 					"file_name": file_name,
 					"file_position": file_position,
-					"de": recognized_text_de["transcript"],
-					"de_confidence": recognized_text_de["confidence"],
-					"en": recognized_text_en["transcript"],
-					"en_confidence": recognized_text_en["confidence"],
+					"de": recognized_text,
+					"en": recognized_text,
 					"temp_file_path": temp_file_name,
 					"timestamp": result_timestamp,
 					"annotation": result_annotation,
