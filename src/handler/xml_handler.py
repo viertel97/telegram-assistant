@@ -35,9 +35,7 @@ async def handle_xml(file_path, file_name, update: Update):
 			recording_timestamp = None
 		description_dict = {
 			"recognized_text_de": transcribed_bookmark["de"],
-			"recognized_text_de_confidence": transcribed_bookmark["de_confidence"],
 			"recognized_text_en": transcribed_bookmark["en"],
-			"recognized_text_en_confidence": transcribed_bookmark["en_confidence"],
 			"recording_timestamp": recording_timestamp,
 			"author": author,
 			"title": title,
