@@ -1,6 +1,7 @@
 import os
 
 from dateutil import parser
+from datetime import datetime, timedelta
 from quarter_lib.logging import setup_logging
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import CallbackContext
@@ -29,7 +30,20 @@ async def get_last_calls(update: Update, context: CallbackContext):
 
 	access_token = get_access_token()
 
-	files, destination_folder_id = get_file_list("Anwendungen/Call Recorder - SKVALEX", access_token)
+
+	files = []
+
+	now = datetime.now()
+	if now.month == 1:
+		last_month = now.replace(year=now.year - 1, month=12)
+	else:
+		last_month = now.replace(month=now.month - 1)
+
+	files_this_month, destination_folder_id = get_file_list(f"Anwendungen/Call Recorder - SKVALEX/{now.strftime('%Y')}/{now.strftime('%m')}", access_token)
+	files.extend(files_this_month)
+	files_last_month, destination_folder_id = get_file_list(f"Anwendungen/Call Recorder - SKVALEX/{last_month.strftime('%Y')}/{last_month.strftime('%m')}", access_token)
+	files.extend(files_last_month)
+
 	files = [file for file in files if "@microsoft.graph.downloadUrl" in file.keys()]
 	for file in files:
 		file["sortCreatedDatetime"] = parser.parse(file["createdDateTime"])
