@@ -28,6 +28,8 @@ async def get_last_calls(update: Update, context: CallbackContext):
 		await update.message.reply_text("Nah")
 		return
 
+	skip_entries = int(context.args[0]) if context.args else 0
+
 	access_token = get_access_token()
 
 
@@ -59,7 +61,7 @@ async def get_last_calls(update: Update, context: CallbackContext):
 
 	files = sorted(files, key=lambda x: x["sortCreatedDatetime"], reverse=True)
 
-	reply_keyboard = [[InlineKeyboardButton(file["readable"], callback_data=str(file["id"]))] for file in files[:20]]
+	reply_keyboard = [[InlineKeyboardButton(file["readable"], callback_data=str(file["id"]))] for file in files[skip_entries : skip_entries + 20]]
 	reply_markup = InlineKeyboardMarkup(reply_keyboard)
 
 	await update.message.reply_text("Please choose:", reply_markup=reply_markup)
