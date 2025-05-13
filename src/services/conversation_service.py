@@ -48,8 +48,8 @@ async def get_last_calls(update: Update, context: CallbackContext):
 
 	files = [file for file in files if "@microsoft.graph.downloadUrl" in file.keys()]
 	for file in files:
-		file["sortCreatedDatetime"] = parser.parse(file["createdDateTime"])
 		file["info"] = extract_info(file["name"])
+		file["sortCreatedDatetime"] = file["info"]["date"]
 		if file["info"]["contact_name"]:
 			file["readable"] = (
 				f"{file['sortCreatedDatetime'].strftime('%d.%m.%Y %H:%M:%S')} - {file['info']['contact_name']} ({file['info']['call_type']})"
