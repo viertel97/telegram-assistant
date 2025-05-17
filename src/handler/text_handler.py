@@ -65,14 +65,17 @@ def find_file(file_list, file_name):
 def extract_info(log_string):
 	# Extract date (first 12 digits)
 	date_str = log_string[:12]
+	new_date_str = log_string[:14]
 	if "@" in log_string:
 		filename = log_string.split("@")[0]
 		segment_counter = int(log_string.split("@")[1])
 	else:
 		filename = log_string
 		segment_counter = 1
-	date = datetime.strptime(date_str, "%Y%m%d%H%M")
-
+	try:
+		date = datetime.strptime(new_date_str, "%Y%m%d%H%M%S")
+	except ValueError:
+		date = datetime.strptime(date_str, "%Y%m%d%H%M")
 	# Extract incoming/outgoing type
 	call_type = "outgoing" if "outgoing" in log_string else "incoming"
 
