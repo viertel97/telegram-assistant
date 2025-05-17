@@ -94,7 +94,7 @@ async def transcribe_call_from_one_drive(update: Update, context: CallbackContex
 		"input.wav",
 		file_function=context.bot.send_document,
 		text_function=context.bot.send_message,
-		prompt="The audio is a phone call between two people. Do not translate the call to another language - just transcription",
+		prompt="Do not translate to another language",
 		chat_id=update.effective_chat.id,
 	)
 	content = " ".join(transcription_list)
