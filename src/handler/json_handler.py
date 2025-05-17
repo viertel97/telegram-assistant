@@ -31,10 +31,11 @@ async def handle_json(file_path, _, update):
 		del messages[key]
 	messages = list(messages.values())
 	messages = [message["message"] for message in messages]
-	messages = sorted(messages, key=lambda x: x["create_time"])
+	# messages = sorted(messages, key=lambda x: x["create_time"]) # sort by create_time doesn't work, because the dates from the exporter are not correct
 
-	# float to timestamp
-	last_update_time = datetime.fromtimestamp(data.get("update_time"))
+
+	max_date = max(message["create_time"] for message in messages)
+	last_update_time = datetime.fromtimestamp(max_date)
 
 	file = {
 		"filename": f"{last_update_time.strftime('%Y-%m-%d')}-{data['title']}.md",
