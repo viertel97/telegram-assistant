@@ -1,5 +1,7 @@
 import uuid
 from datetime import datetime, timedelta
+from typing import Dict
+from urllib.parse import urljoin
 
 import requests
 from quarter_lib.akeyless import get_secrets
@@ -15,15 +17,38 @@ from quarter_lib_old.todoist import (
 	upload_file,
 )
 from todoist_api_python.api import TodoistAPI
-from todoist_api_python.endpoints import get_sync_url
-from todoist_api_python.headers import create_headers
 from todoist_api_python.models import Task
+
+
+AUTHORIZATION = ("Authorization", "Bearer %s")
+
+
+def create_headers(
+    token: str | None = None,
+) -> Dict[str, str]:
+    headers: Dict[str, str] = {}
+
+    if token:
+        headers.update([(AUTHORIZATION[0], AUTHORIZATION[1] % token)])
+
+    return headers
 
 logger = setup_logging(__file__)
 TODOIST_TOKEN = get_secrets("todoist/token")
 TODOIST_API = TodoistAPI(TODOIST_TOKEN)
 HEADERS = create_headers(token=TODOIST_TOKEN)
 COMPLETE_TASKS_LIMIT = 200
+
+
+
+
+
+BASE_URL = "https://api.todoist.com"
+SYNC_VERSION = "v9"
+SYNC_API = urljoin(BASE_URL, f"/sync/{SYNC_VERSION}/")
+
+def get_sync_url(relative_path: str) -> str:
+    return urljoin(SYNC_API, relative_path)
 
 
 def run_todoist_sync_commands(commands):
@@ -107,43 +132,4 @@ def get_rework_projects(project_name_start_with):
 
 
 def get_completed_tasks(since: datetime):
-	offset = 0
-	all_items = []
-
-	while True:
-		response = requests.post(
-			get_sync_url("completed/get_all"),
-			data={
-				"annotate_notes": True,
-				"annotate_items": True,
-				"since": since.strftime("%Y-%m-%dT%H:%M:%S"),
-				"limit": COMPLETE_TASKS_LIMIT,
-				"offset": offset,
-			},
-			headers=HEADERS,
-		).json()
-
-		all_items.extend(response["items"])
-		if len(response["items"]) < COMPLETE_TASKS_LIMIT:
-			break
-		offset += COMPLETE_TASKS_LIMIT
-
-	all_items = [
-		{
-			k: v
-			for k, v in item.items()
-			if k
-			not in [
-				"completed_at",
-				"content",
-				"id",
-				"project_id",
-				"section_id",
-				"user_id",
-				"v2_project_id",
-				"v2_section_id",
-			]
-		}
-		for item in all_items
-	]
-	return all_items
+	return list(TODOIST_API.get_completed_tasks_by_completion_date(since=since, until=datetime.now()))

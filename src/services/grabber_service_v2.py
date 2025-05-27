@@ -42,7 +42,7 @@ async def dump_todoist_to_monica(update: Update, context: CallbackContext):
 
 
 def get_grabber_data(days_to_dump: int) -> tuple[pd.DataFrame, list[dict]]:
-	df_items, _, _, _ = get_data(days_to_dump)
+	df_items, _, _ = get_data(days_to_dump)
 	if df_items.empty:
 		return df_items, []
 	df_items = create_position_in_hierarchy(df_items)
@@ -118,11 +118,13 @@ def generate_front_matter(
 		"slugified_title": hierarchy_dict["slugified_title"],
 		"content": hierarchy_dict["content"] if updated_content is None else updated_content,
 		"summary": hierarchy_dict["summary"],
-		"description": hierarchy_dict["description"],
+		"description": hierarchy_dict["description"] if hierarchy_dict["description"] else None,
 		"project": hierarchy_dict["project"],
 		"source": hierarchy_dict["source"],
 		"tags": hierarchy_dict["labels"],
-		"is_completed": hierarchy_dict["is_completed"],
+		"deadline": hierarchy_dict["deadline"],
+		"due": hierarchy_dict["due"],
+		"is_completed": True if hierarchy_dict["completed_at"] is not None else False,
 		"type": hierarchy_dict["type"],
 		"id": hierarchy_dict["id"] if not is_nan_or_none(hierarchy_dict["id"]) else None,
 	}
@@ -178,7 +180,7 @@ def create_index_file_from_dict(index_file_name, timestamp, root_elements):
 ```dataview
 TABLE WITHOUT ID link(file.link, content) AS "Content", description,
     choice(is_completed = true, "✅", "❌") AS "Completion Status", 
-    created, tags, project, source
+    created, tags, project, source, due, deadline
 WHERE contains(file.folder, this.file.folder) and file != this.file
 SORT created
 ```
@@ -188,7 +190,7 @@ SORT created
 ```dataview
 TABLE WITHOUT ID link(file.link, content) AS "Content", description,
     choice(is_completed = true, "✅", "❌") AS "Completion Status", 
-    created, tags, project, source
+    created, tags, project, source, due, deadline
 WHERE contains(file.folder, this.file.folder) and file != this.file and is_completed = false
 SORT created
 ```

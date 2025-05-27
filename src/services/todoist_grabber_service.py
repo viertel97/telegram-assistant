@@ -2,27 +2,35 @@ import re
 from datetime import datetime, timedelta
 
 import pandas as pd
-import requests
-from todoist_api_python.endpoints import get_sync_url
 
 from src.handler.xml_handler import logger
 from src.helper.file_helper import slugify
 from src.helper.grabber_helper import DEFAULT_OFFSET, EASY_VOICE_RECORDER_MATCH, GHT_MATCH, VOICE_RECORDER_MATCH
 from src.services.llm_service import get_summaries
-from src.services.todoist_service import HEADERS, TODOIST_API, get_completed_tasks, get_default_offset_including_check
+from src.services.todoist_service import  TODOIST_API, get_completed_tasks, get_default_offset_including_check
+from todoist_api_python.models import Deadline, Due
+import pytz
+
+utc=pytz.UTC
 
 
 def get_data(days):
-	df_projects = clean_api_response(TODOIST_API.get_projects()).rename(columns={"id": "project_id", "name": "project"})
-	df_labels = clean_api_response(TODOIST_API.get_labels())
-	df_notes = get_comments(days)
-	df_items = get_items(days, df_projects, df_labels, df_notes)
+	df_projects = pd.DataFrame(clean_api_response(list(TODOIST_API.get_projects()))).rename(columns={"id": "project_id", "name": "project"})
+	df_items = get_items(days, df_projects)
+	df_notes = get_comments(df_items)
+
+	df_items = pd.concat([df_items, df_notes])
+	df_items["created_at_string"] = df_items["created_at"].dt.strftime("%Y-%m-%dT%H:%M:%S")
+
+	df_items = df_items.where(pd.notnull(df_items), None)
+
+
 	if df_items.empty:
 		logger.info("No data to dump")
-		return df_items, df_projects, df_notes, df_labels
+		return df_items, df_projects, df_notes
 	df_items["summary"] = get_summaries(df_items.content)
 	df_items[["slugified_title"]] = df_items["summary"].apply(lambda x: slugify(x)).apply(pd.Series)
-	return df_items, df_projects, df_notes, df_labels
+	return df_items, df_projects, df_notes
 
 
 def set_finished_label(df_items: pd.DataFrame, now: datetime):
@@ -39,42 +47,42 @@ def get_labels(labels, df_labels):
 	return df_labels[df_labels["id"].isin(labels)]["name"].tolist()
 
 
-def get_comments(days):
-	df_notes = pd.DataFrame(
-		requests.post(
-			get_sync_url("sync"),
-			headers=HEADERS,
-			json={"sync_token": "*", "resource_types": ["notes"]},
-		).json()["notes"],
-	)
-	df_notes.rename(columns={"item_id": "parent_id", "posted_at": "created_at"}, inplace=True)
+def get_comments(df_items):
+	logger.info("Getting comments")
+	comments = []
+	for index, file in df_items.iterrows():
+		comments_per_file = clean_api_response(list(TODOIST_API.get_comments(task_id=file["id"])))
+		if comments_per_file:
+			for comment in comments_per_file:
+				comment["completed_at"] = file["completed_at"]
+				comments.append(comment)
+	df_notes = pd.DataFrame(comments)
 
-	start_date = (datetime.today() - timedelta(days=days)).strftime("%Y-%m-%d")
-	df_notes = df_notes[df_notes["created_at"] >= start_date]
+	df_notes.rename(columns={"task_id": "parent_id", "posted_at": "created_at"}, inplace=True)
 
-	df_notes["type"], df_notes["source"], df_notes["is_completed"] = (
+	df_notes["type"], df_notes["source"] = (
 		"note",
 		"Todoist",
-		False,
 	)
 	df_notes = df_notes[~df_notes["content"].eq("")]  # remove empty notes
-	df_notes = df_notes[df_notes.is_deleted == False]
 
-	df_notes = df_notes[["id", "content", "parent_id", "created_at", "type", "source", "is_completed"]]
+	df_notes = df_notes[["id", "content", "parent_id", "created_at", "type", "source", "completed_at"]]
 	return df_notes
 
 
-def get_items(days, df_projects, df_labels, df_notes):
+def get_items(days, df_projects):
+	logger.info("Getting items")
 	df_items = pd.concat(
 		[
-			clean_api_response(TODOIST_API.get_tasks()),
-			clean_completed_tasks(get_completed_tasks(datetime.today() - timedelta(days=days + 1))),
+			pd.DataFrame(clean_api_response(list(TODOIST_API.get_tasks(limit=200)))),
+			pd.DataFrame(clean_api_response(get_completed_tasks(datetime.today() - timedelta(days=days + 1)))),
 		],
 		ignore_index=True,
 	)
 	df_items = df_items.merge(df_projects[["project_id", "project"]], on="project_id", how="left")
 
-	start_date = (datetime.today() - timedelta(days=days)).strftime("%Y-%m-%d")
+	start_date = utc.localize(datetime.today() - timedelta(days=days))
+	df_items["created_at"] = pd.to_datetime(df_items["created_at"], utc=True)
 	df_filtered_items = df_items[df_items["created_at"] >= start_date]
 
 	exclusions = [
@@ -110,8 +118,8 @@ def get_items(days, df_projects, df_labels, df_notes):
 
 	df_filtered_items = handle_sources(df_filtered_items)
 
-	df_filtered_items["type"] = "task"
-	df_filtered_items = pd.concat([df_filtered_items, df_notes])
+	df_filtered_items["type"] = df_filtered_items["parent_id"].apply(lambda x: "task" if x is None else "subtask")
+
 	df_filtered_items = handle_offset(df_filtered_items)
 
 	# remove items from which the parent is not in the list or parent id is none
@@ -120,34 +128,39 @@ def get_items(days, df_projects, df_labels, df_notes):
 	]
 
 	df_filtered_items["created_at"] = pd.to_datetime(df_filtered_items["created_at"]) + pd.Timedelta("01:00:00")
-	df_filtered_items["created_at_string"] = df_filtered_items["created_at"].dt.strftime("%Y-%m-%dT%H:%M:%S")
 
-	df_filtered_items["content"] = df_filtered_items["content"].str.split(" ~ ")
+	df_filtered_items["content"] = df_filtered_items["content"].str.split(" ¥ ")
 	df_filtered_items = df_filtered_items.explode("content").reset_index(drop=True)
 
 	df_filtered_items["content"] = df_filtered_items["content"].replace({"Ş": "S", "ş": "s"}, regex=True)
 	df_filtered_items["content"] = df_filtered_items["content"].str.replace('"', "")
 
+	df_filtered_items["deadline"] = df_filtered_items["deadline"].apply(
+		lambda x: x.date.strftime("%Y-%m-%d") if isinstance(x, Deadline) else None
+	)
+	df_filtered_items["due"] = df_filtered_items["due"].apply(
+		lambda x: x.date.strftime("%Y-%m-%d") if isinstance(x, Due) else None
+	)
+
 	df_filtered_items.drop(
 		columns=[
 			"assignee_id",
 			"assigner_id",
-			"comment_count",
 			"creator_id",
 			"task_id",
-			"due",
-			"url",
-			"sync_id",
 			"duration",
 			"order",
 			"project_id",
+			"is_collapsed",
+			"updated_at",
+			"deadline.lang",
+			"deadline.date",
 			"section_id",
 			"notes",
 		],
 		inplace=True,
+		errors="ignore",
 	)
-
-	df_filtered_items = df_filtered_items.where(pd.notnull(df_filtered_items), None)
 
 	df_filtered_items.sort_values(by="created_at", ascending=False, inplace=True)
 
@@ -155,10 +168,12 @@ def get_items(days, df_projects, df_labels, df_notes):
 
 
 def clean_api_response(api_response):
+	if isinstance(api_response[0], list):
+		api_response = [item for sublist in api_response for item in sublist]
 	temp_list = []
 	for entry in api_response:
 		temp_list.append(entry.__dict__)
-	return pd.DataFrame(temp_list)
+	return temp_list
 
 
 def clean_completed_tasks(api_response):
