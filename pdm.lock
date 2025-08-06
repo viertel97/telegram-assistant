@@ -5,7 +5,7 @@
 groups = ["default", "dev", "documentation", "linting", "security", "testing", "type-checking"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:b82faa44b7344f53cbcfd758c992e58e4170f55c61559899d7d6dd0a2bed2609"
+content_hash = "sha256:16a0ed4832bb0eb2b879b0b884fab8c54408f4ecdf4970b57bf21520fc3628d6"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
