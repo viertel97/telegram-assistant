@@ -5,8 +5,8 @@ from datetime import datetime, timedelta
 
 import speech_recognition as sr
 from quarter_lib.logging import setup_logging
-from quarter_lib_old.file_helper import delete_files
-from quarter_lib_old.transcriber import convert_to_wav
+from quarter_lib.file_helper import delete_files
+from quarter_lib.transcriber import convert_to_wav
 from telegram import Update
 from telegram.ext import CallbackContext
 

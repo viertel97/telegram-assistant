@@ -19,10 +19,9 @@ dependencies = [
     "msal==1.20.0",
     "PyMuPDF==1.21.1",
     "PyGithub==1.58.2",
-    "quarter-lib==0.0.22",
+    "quarter-lib==0.0.26",
     "langchain-groq==0.2.1",
     "numpy==1.26.4",
-    "quarter-lib-old"
 ]
 requires-python = "==3.11.*"
 readme = "README.md"
@@ -46,8 +45,3 @@ install-pre-commit-msg-hook = "pre-commit install --hook-type commit-msg"
 [tool.mypy]
 # Exclude __init__.py files in src and tests directories
 exclude = "^src/__init__.py$|^tests/__init__.py$"
-
-[[tool.pdm.source]]
-name = "Quarter-Lib-Old"
-url = "https://Quarter-Lib-Old:${PAT}@pkgs.dev.azure.com/viertel/Quarter-Lib-Old/_packaging/Quarter-Lib-Old/pypi/simple/"
-include_packages = ["quarter-lib-old"]

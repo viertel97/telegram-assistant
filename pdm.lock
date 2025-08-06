@@ -5,7 +5,7 @@
 groups = ["default", "dev", "documentation", "linting", "security", "testing", "type-checking"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:9704be54b985a8ce2e6451ef4430e37d853eb0c614b7a2b54499fee3d81e3437"
+content_hash = "sha256:b82faa44b7344f53cbcfd758c992e58e4170f55c61559899d7d6dd0a2bed2609"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -260,7 +260,7 @@ files = [
 
 [[package]]
 name = "groq"
-version = "0.30.0"
+version = "0.31.0"
 requires_python = ">=3.8"
 summary = "The official Python library for the groq API"
 dependencies = [
@@ -272,8 +272,8 @@ dependencies = [
     "typing-extensions<5,>=4.10",
 ]
 files = [
-    {file = "groq-0.30.0-py3-none-any.whl", hash = "sha256:6d9609a7778ba56432f45c1bac21b005f02c6c0aca9c1c094e65536f162c1e83"},
-    {file = "groq-0.30.0.tar.gz", hash = "sha256:919466e48fcbebef08fed3f71debb0f96b0ea8d2ec77842c384aa843019f6e2c"},
+    {file = "groq-0.31.0-py3-none-any.whl", hash = "sha256:5e3c7ec9728b7cccf913da982a9b5ebb46dc18a070b35e12a3d6a1e12d6b0f7f"},
+    {file = "groq-0.31.0.tar.gz", hash = "sha256:182252e9bf0d696df607c137cbafa851d2c84aaf94bcfe9165c0bc231043490c"},
 ]
 
 [[package]]
@@ -445,7 +445,7 @@ files = [
 
 [[package]]
 name = "langsmith"
-version = "0.4.11"
+version = "0.4.12"
 requires_python = ">=3.9"
 summary = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 dependencies = [
@@ -458,8 +458,8 @@ dependencies = [
     "zstandard>=0.23.0",
 ]
 files = [
-    {file = "langsmith-0.4.11-py3-none-any.whl", hash = "sha256:ce3a52809d37854bcb129affd8cd883025985891b82a46f2ae597c511283360d"},
-    {file = "langsmith-0.4.11.tar.gz", hash = "sha256:2cb39a8af795ff4014e60ca07a73a9bcd89b67837193c9f6be22efb5c9c4c846"},
+    {file = "langsmith-0.4.12-py3-none-any.whl", hash = "sha256:adbd9bc9062ecda93117f124bc7ce4f09bf72b116c3297aef47cbbb7df1f0582"},
+    {file = "langsmith-0.4.12.tar.gz", hash = "sha256:95cb05772da0325e5e4ed48b5df859ebcac801804e25702fc0543589be7bbfb1"},
 ]
 
 [[package]]
@@ -981,7 +981,7 @@ files = [
 
 [[package]]
 name = "quarter-lib"
-version = "0.0.22"
+version = "0.0.26"
 requires_python = ">=3.6"
 summary = "TBD"
 dependencies = [
@@ -991,18 +991,8 @@ dependencies = [
     "requests",
 ]
 files = [
-    {file = "quarter_lib-0.0.22-py3-none-any.whl", hash = "sha256:06706ade8c3b7b3d4895898d71850bf6d4c2c371c284bf1ceb26adcc2a37e194"},
-    {file = "quarter_lib-0.0.22.tar.gz", hash = "sha256:b2a421f0ace1ab6f6c9c0b9d363684673b7f0dcdad862242b00d70ac48d832d6"},
-]
-
-[[package]]
-name = "quarter-lib-old"
-version = "0.9.0"
-requires_python = ">=3.9,<4.0"
-summary = ""
-files = [
-    {file = "quarter_lib_old-0.9.0-py3-none-any.whl", hash = "sha256:96ea3a705245b2b9d7557997d71399a2c7af2251d383278a7c10a2652ac84c77"},
-    {file = "quarter_lib_old-0.9.0.tar.gz", hash = "sha256:529a77d6aae37281976c5027439248092f0504a7090a75c199d24aeb2f8db07c"},
+    {file = "quarter_lib-0.0.26-py3-none-any.whl", hash = "sha256:0ceb9a3864b7a59c161b077ed00fee38923ef4aac1a2cd0421c405430cba4e21"},
+    {file = "quarter_lib-0.0.26.tar.gz", hash = "sha256:602e152a780dc74399c8ea9b0d1c1d95b5267c4ec924896e92e26de87f204efe"},
 ]
 
 [[package]]
@@ -1261,7 +1251,7 @@ files = [
 
 [[package]]
 name = "virtualenv"
-version = "20.33.0"
+version = "20.33.1"
 requires_python = ">=3.8"
 summary = "Virtual Python Environment builder"
 dependencies = [
@@ -1271,8 +1261,8 @@ dependencies = [
     "platformdirs<5,>=3.9.1",
 ]
 files = [
-    {file = "virtualenv-20.33.0-py3-none-any.whl", hash = "sha256:106b6baa8ab1b526d5a9b71165c85c456fbd49b16976c88e2bc9352ee3bc5d3f"},
-    {file = "virtualenv-20.33.0.tar.gz", hash = "sha256:47e0c0d2ef1801fce721708ccdf2a28b9403fa2307c3268aebd03225976f61d2"},
+    {file = "virtualenv-20.33.1-py3-none-any.whl", hash = "sha256:07c19bc66c11acab6a5958b815cbcee30891cd1c2ccf53785a28651a0d8d8a67"},
+    {file = "virtualenv-20.33.1.tar.gz", hash = "sha256:1b44478d9e261b3fb8baa5e74a0ca3bc0e05f21aa36167bf9cbf850e542765b8"},
 ]
 
 [[package]]

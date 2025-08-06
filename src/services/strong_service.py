@@ -2,7 +2,7 @@ import os
 
 import pymysql
 from loguru import logger
-from quarter_lib_old.database import close_server_connection, create_server_connection
+from quarter_lib.database.mysql import close_server_connection, create_server_connection
 
 logger.add(
 	os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/logs/" + os.path.basename(__file__) + ".log"),

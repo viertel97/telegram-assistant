@@ -3,13 +3,11 @@ from datetime import datetime, timedelta
 from typing import Dict
 from urllib.parse import urljoin
 
-import requests
 from quarter_lib.akeyless import get_secrets
 from quarter_lib.logging import setup_logging
-from quarter_lib_old.todoist import (
+from quarter_lib.todoist import (
 	add_note_with_attachement,
 	get_items_by_label,
-	get_items_by_project,
 	get_user_state,
 	move_item_to_project,
 	run_sync_commands,

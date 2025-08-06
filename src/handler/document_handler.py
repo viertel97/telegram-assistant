@@ -1,7 +1,7 @@
 import os
 
 from quarter_lib.logging import setup_logging
-from quarter_lib_old.transcriber import convert_to_wav
+from quarter_lib.transcriber import convert_to_wav
 from telegram import Update
 from telegram.ext import CallbackContext
 
