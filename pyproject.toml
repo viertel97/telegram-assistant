@@ -6,8 +6,9 @@ authors = [
     {name = "viertel97", email = "janik.viertel@outlook.com"},
 ]
 dependencies = [
+    "quarter-lib==0.0.27",
     "beautifulsoup4==4.11.1",
-    "loguru==0.5.3",
+    "loguru==0.6.0",
     "Markdown==3.3.4",
     "pandas==1.5.3",
     "PyMySQL==1.0.2",
@@ -19,7 +20,6 @@ dependencies = [
     "msal==1.20.0",
     "PyMuPDF==1.21.1",
     "PyGithub==1.58.2",
-    "quarter-lib==0.0.26",
     "langchain-groq==0.2.1",
     "numpy==1.26.4",
 ]

@@ -5,7 +5,7 @@
 groups = ["default", "dev", "documentation", "linting", "security", "testing", "type-checking"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:16a0ed4832bb0eb2b879b0b884fab8c54408f4ecdf4970b57bf21520fc3628d6"
+content_hash = "sha256:e94ef4bf55957b129064477f475d49eab1b017d6133bf1ae3e42211c93595ec1"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -464,7 +464,7 @@ files = [
 
 [[package]]
 name = "loguru"
-version = "0.5.3"
+version = "0.6.0"
 requires_python = ">=3.5"
 summary = "Python logging made (stupidly) simple"
 dependencies = [
@@ -473,8 +473,8 @@ dependencies = [
     "win32-setctime>=1.0.0; sys_platform == \"win32\"",
 ]
 files = [
-    {file = "loguru-0.5.3-py3-none-any.whl", hash = "sha256:f8087ac396b5ee5f67c963b495d615ebbceac2796379599820e324419d53667c"},
-    {file = "loguru-0.5.3.tar.gz", hash = "sha256:b28e72ac7a98be3d28ad28570299a393dfcd32e5e3f6a353dec94675767b6319"},
+    {file = "loguru-0.6.0-py3-none-any.whl", hash = "sha256:4e2414d534a2ab57573365b3e6d0234dfb1d84b68b7f3b948e6fb743860a77c3"},
+    {file = "loguru-0.6.0.tar.gz", hash = "sha256:066bd06758d0a513e9836fd9c6b5a75bfb3fd36841f4b996bc60b547a309d41c"},
 ]
 
 [[package]]
@@ -981,7 +981,7 @@ files = [
 
 [[package]]
 name = "quarter-lib"
-version = "0.0.26"
+version = "0.0.27"
 requires_python = ">=3.6"
 summary = "TBD"
 dependencies = [
@@ -991,8 +991,8 @@ dependencies = [
     "requests",
 ]
 files = [
-    {file = "quarter_lib-0.0.26-py3-none-any.whl", hash = "sha256:0ceb9a3864b7a59c161b077ed00fee38923ef4aac1a2cd0421c405430cba4e21"},
-    {file = "quarter_lib-0.0.26.tar.gz", hash = "sha256:602e152a780dc74399c8ea9b0d1c1d95b5267c4ec924896e92e26de87f204efe"},
+    {file = "quarter_lib-0.0.27-py3-none-any.whl", hash = "sha256:cb70aede0956eaa92b27587177ae879614cbb8c30ad1022f6cf03cb24d5b0098"},
+    {file = "quarter_lib-0.0.27.tar.gz", hash = "sha256:a418054940761bc22f8920d6049355e8e713536efe6f8aa0a71160652c92f3d5"},
 ]
 
 [[package]]
