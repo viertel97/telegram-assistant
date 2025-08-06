@@ -1,4 +1,4 @@
-ARG PYTHON_BASE=3.11-slim-buster
+ARG PYTHON_BASE=3.11-slim-bullseye
 ARG PAT
 
 FROM python:$PYTHON_BASE AS builder
