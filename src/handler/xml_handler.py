@@ -4,6 +4,7 @@ from json import dumps
 from quarter_lib.logging import setup_logging
 from telegram import Update
 
+from src.handler.pdf_handler import handle_pdf_during_xml_processing
 from src.services.book_note_service import get_smallest_project
 from src.services.bookmark_service import get_bookmark_transcriptions
 from src.services.logging_service import log_to_telegram
@@ -80,4 +81,7 @@ async def handle_xml(file_path, file_name, update: Update):
 	message = f"Transcribed {len(transcribed_bookmarks)} bookmarks for {title} by {author}" + " and added them to Todoist"
 
 	logger.info(message)
+
+	await handle_pdf_during_xml_processing(update.effective_message.caption, title, update)
+
 	return message

@@ -24,14 +24,14 @@ AUTHORIZATION = ("Authorization", "Bearer %s")
 
 
 def create_headers(
-    token: str | None = None,
+	token: str | None = None,
 ) -> Dict[str, str]:
-    headers: Dict[str, str] = {}
+	headers: Dict[str, str] = {}
 
-    if token:
-        headers.update([(AUTHORIZATION[0], AUTHORIZATION[1] % token)])
+	if token:
+		headers.update([(AUTHORIZATION[0], AUTHORIZATION[1] % token)])
 
-    return headers
+	return headers
 
 logger = setup_logging(__file__)
 TODOIST_TOKEN = get_secrets("todoist/token")
@@ -48,7 +48,7 @@ SYNC_VERSION = "v9"
 SYNC_API = urljoin(BASE_URL, f"/sync/{SYNC_VERSION}/")
 
 def get_sync_url(relative_path: str) -> str:
-    return urljoin(SYNC_API, relative_path)
+	return urljoin(SYNC_API, relative_path)
 
 
 def run_todoist_sync_commands(commands):
@@ -110,8 +110,10 @@ def get_items_by_todoist_label(label_id):
 	return get_items_by_label(label_id)
 
 
+
 def get_items_by_todoist_project(project_id):
-	return get_items_by_project(project_id)
+	paginated_items = TODOIST_API.get_tasks(project_id=project_id)
+	return [item for page in paginated_items for item in page if item.is_completed == False]
 
 
 def update_content(task_id, content):
@@ -125,9 +127,10 @@ async def update_description(task_id, description):
 def get_rework_projects(project_name_start_with):
 	projects = TODOIST_API.get_projects()
 	rework_projects = []
-	for project in projects:
-		if project.name.startswith(project_name_start_with):
-			rework_projects.append(project)
+	for paginated_projects in projects:
+		for project in paginated_projects:
+			if project.name.startswith(project_name_start_with):
+				rework_projects.append(project)
 	return rework_projects
 
 

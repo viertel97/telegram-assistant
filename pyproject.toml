@@ -22,7 +22,7 @@ dependencies = [
     "quarter-lib==0.0.22",
     "langchain-groq==0.2.1",
     "numpy==1.26.4",
-    "quarter-lib-old",
+    "quarter-lib-old"
 ]
 requires-python = "==3.11.*"
 readme = "README.md"

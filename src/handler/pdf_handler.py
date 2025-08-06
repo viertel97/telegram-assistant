@@ -1,14 +1,17 @@
 import json
 import os
 import re
+import tempfile
 
 import fitz
 import pandas as pd
 from quarter_lib.logging import setup_logging
 from telegram import Update
 
+from src.helper.config_helper import get_book_path_mapping_from_web
 from src.helper.file_helper import delete_files
 from src.services.logging_service import log_to_telegram
+from src.services.microsoft_service import download_file_from_path, replace_file_in_onedrive, download_pdf_from_path
 from src.services.todoist_service import (
 	get_items_by_todoist_project,
 	get_rework_projects,
@@ -42,14 +45,17 @@ def get_filtered_findings(findings):
 	return None, page_numbers
 
 
-async def handle_pdf(file_path, file_name, update: Update):
+async def handle_pdf(file_path, file_name, update: Update, caption: str = None):
 	to_delete = []
 	projects = get_rework_projects("Book-Notes")
 	tasks = [tasks for project in projects for tasks in get_items_by_todoist_project(project.id)]
 	tasks = [filter_content(task.__dict__) for task in tasks]
 	df = pd.DataFrame(tasks)
 	grouped_df = df.groupby("title")
-	splitted_caption = update.message.caption.split(" § ")
+
+	# Use provided caption or fall back to update.message.caption
+	caption_to_use = caption if caption is not None else update.message.caption
+	splitted_caption = caption_to_use.split(" § ")
 	selected_book_from_todoist, selected_language = (
 		splitted_caption[0],
 		splitted_caption[1],
@@ -109,9 +115,11 @@ async def handle_pdf(file_path, file_name, update: Update):
 				not_found_counter += 1
 		if not_found_counter == len(group):
 			await log_to_telegram(f"nothing found for all {len(group)} tasks", logger, update)
-			return
-		new_file_path = file_path[:-4].replace("_V" + str(file_version), "")
-		new_file_path = os.path.join(new_file_path + "_V" + str(file_version + 1) + ".pdf")
+			return None
+
+		with tempfile.NamedTemporaryFile(suffix=f"_V{file_version + 1}.pdf", delete=False) as temp_pdf:
+			new_file_path = temp_pdf.name
+
 		document.save(new_file_path)
 		await update.message.reply_document(
 			document=open(new_file_path, "rb"),
@@ -125,16 +133,103 @@ async def handle_pdf(file_path, file_name, update: Update):
 		else:
 			await log_to_telegram(f"synced todoist with positive response: {response} - {response.text}", logger, update)
 
-		to_delete.append(file_path)
-		to_delete.append(new_file_path)
+		delete_files(to_delete)
+		return new_file_path
 	else:
 		await log_to_telegram(
 			f"no book for the caption '{selected_book_from_todoist}' found",
 			logger,
 			update,
 		)
-	delete_files(to_delete)
+		delete_files(to_delete)
+		return None
 
+
+async def handle_pdf_during_xml_processing(path_to_identify, title, update: Update):
+	"""
+	Annotate PDF files directly during XML processing by:
+	1. Getting the book path mapping
+	2. Finding the corresponding PDF for the XML file
+	3. Downloading the PDF from OneDrive
+	4. Calling handle_pdf function to process annotations
+	5. Updating the file back to OneDrive
+	"""
+	to_delete = []
+
+	try:
+		# Get the book path mapping
+		book_path_mapping = get_book_path_mapping_from_web()
+
+		# Find the corresponding PDF path for this XML file
+		pdf_path, language = None, None
+		for xml_path, language_and_path in book_path_mapping.items():
+			if path_to_identify == xml_path:
+				pdf_path = language_and_path["onedrive_path"]
+				language = language_and_path["language"]
+				break
+
+		if not pdf_path:
+			await log_to_telegram(
+				f"No PDF mapping found for XML file: {path_to_identify}",
+				logger,
+				update,
+			)
+			return
+
+		if not language:
+			await log_to_telegram(
+				f"No language found for PDF mapping: {pdf_path}",
+				logger,
+				update,
+			)
+			return
+
+		await log_to_telegram(
+			f"Found PDF mapping: {path_to_identify} -> {pdf_path}",
+			logger,
+			update,
+		)
+
+		# Create temporary file for the downloaded PDF
+		with tempfile.NamedTemporaryFile(suffix=".pdf", delete=True) as temp_pdf:
+			temp_pdf_path = temp_pdf.name
+		to_delete.append(temp_pdf_path)
+
+		# Download the PDF from OneDrive
+		try:
+			await log_to_telegram(f"Downloading PDF from OneDrive: {pdf_path}", logger, update)
+			download_pdf_from_path(pdf_path, temp_pdf_path)
+			await log_to_telegram(f"Successfully downloaded PDF to {temp_pdf_path}", logger, update)
+		except Exception as e:
+			await log_to_telegram(f"Error downloading PDF: {str(e)}", logger, update)
+			return
+
+		# Create the caption in the correct format for handle_pdf
+		# Format: "book_title § language"
+		caption = f"{title} § {language}"
+
+		# Call the existing handle_pdf function with the caption parameter
+		pdf_filename = os.path.basename(pdf_path)
+		annotated_pdf_path = await handle_pdf(temp_pdf_path, pdf_filename, update, caption)
+
+		# If annotations were successfully added, upload the annotated PDF back to OneDrive
+		if annotated_pdf_path:
+			to_delete.append(annotated_pdf_path)
+			try:
+				await log_to_telegram(f"Uploading annotated PDF back to OneDrive: {pdf_path}", logger, update)
+				replace_file_in_onedrive(pdf_path, annotated_pdf_path)
+				await log_to_telegram(f"Successfully updated PDF in OneDrive", logger, update)
+			except Exception as e:
+				await log_to_telegram(f"Error updating PDF in OneDrive: {str(e)}", logger, update)
+		else:
+			await log_to_telegram(f"No annotations were added, OneDrive file not updated", logger, update)
+
+	except Exception as e:
+		await log_to_telegram(f"Error in PDF processing: {str(e)}", logger, update)
+		logger.error(f"Error in handle_pdf_during_xml_processing: {str(e)}")
+	finally:
+		# Clean up temporary files
+		delete_files(to_delete)
 
 async def add_annotation_to_finding(filtered_findings, task, text_to_search):
 	inst = get_rect(filtered_findings)

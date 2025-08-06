@@ -1,10 +1,35 @@
 import json
 import os
 
+import requests
 from quarter_lib.akeyless import get_secrets
+from quarter_lib.logging import setup_logging
+
+from src.helper.caching import ttl_cache
+
+
+logger = setup_logging(__file__)
 
 CHAT_ID = get_secrets("telegram/chat_id")
 
+MASTER_KEY, BOOK_PATH_MAPPING_BIN = get_secrets(
+	[
+		"jsonbin/masterkey",
+		"jsonbin/book_path_mapping-bin",
+	]
+)
+BASE_URL = "https://api.jsonbin.io/v3"
+BOOK_PATH_MAPPING_URL = f"{BASE_URL}/b/{BOOK_PATH_MAPPING_BIN}/latest"
+
+
+@ttl_cache(ttl=60 * 60)
+def get_book_path_mapping_from_web():
+	logger.info("getting rework data from web")
+	response = requests.get(
+		BOOK_PATH_MAPPING_URL,
+		headers={"User-Agent": "Mozilla/5.0", "X-Master-Key": MASTER_KEY},
+	)
+	return response.json()["record"]
 
 def is_not_correct_chat_id(chat_id):
 	return str(chat_id) != CHAT_ID
