@@ -5,7 +5,7 @@
 groups = ["default", "dev", "documentation", "linting", "security", "testing", "type-checking"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:e94ef4bf55957b129064477f475d49eab1b017d6133bf1ae3e42211c93595ec1"
+content_hash = "sha256:18b4f816abf74f2de00a92fa53421aab8436a165f0e750d5332bb97712f5e9b8"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -981,7 +981,7 @@ files = [
 
 [[package]]
 name = "quarter-lib"
-version = "0.0.27"
+version = "0.0.28"
 requires_python = ">=3.6"
 summary = "TBD"
 dependencies = [
@@ -991,8 +991,8 @@ dependencies = [
     "requests",
 ]
 files = [
-    {file = "quarter_lib-0.0.27-py3-none-any.whl", hash = "sha256:cb70aede0956eaa92b27587177ae879614cbb8c30ad1022f6cf03cb24d5b0098"},
-    {file = "quarter_lib-0.0.27.tar.gz", hash = "sha256:a418054940761bc22f8920d6049355e8e713536efe6f8aa0a71160652c92f3d5"},
+    {file = "quarter_lib-0.0.28-py3-none-any.whl", hash = "sha256:fc250ab18e89f18caad746ae1aa3df4a6f53062b9a02dd05c8ae52fd063565db"},
+    {file = "quarter_lib-0.0.28.tar.gz", hash = "sha256:e750abc38f1af9bcd4a0ee0aca25b92ec0a14d5c422fb478c0f8a591b6e9a70e"},
 ]
 
 [[package]]
