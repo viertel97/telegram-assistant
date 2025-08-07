@@ -5,7 +5,7 @@
 groups = ["default", "dev", "documentation", "linting", "security", "testing", "type-checking"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:18b4f816abf74f2de00a92fa53421aab8436a165f0e750d5332bb97712f5e9b8"
+content_hash = "sha256:f6c5567eb9dc5e63541dfc4431d5607b27a1cbc5bd1bebb66183ef4f094fdc9c"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -76,6 +76,16 @@ summary = "Fast, simple object-to-object and broadcast signaling"
 files = [
     {file = "blinker-1.9.0-py3-none-any.whl", hash = "sha256:ba0efaa9080b619ff2f3459d1d500c57bddea4a6b424b60a91141db6fd2f08bc"},
     {file = "blinker-1.9.0.tar.gz", hash = "sha256:b4ce2265a7abece45e7cc896e98dbebe6cead56bcf805a3d23136d145f5445bf"},
+]
+
+[[package]]
+name = "cachetools"
+version = "5.5.2"
+requires_python = ">=3.7"
+summary = "Extensible memoizing collections and decorators"
+files = [
+    {file = "cachetools-5.5.2-py3-none-any.whl", hash = "sha256:d26a22bcc62eb95c3beabd9f1ee5e820d3d2704fe2967cbe350e20c8ffcd3f0a"},
+    {file = "cachetools-5.5.2.tar.gz", hash = "sha256:1a661caa9175d26759571b2e19580f9d6393969e5dfca11fdb1f947a23e640d4"},
 ]
 
 [[package]]
@@ -256,6 +266,35 @@ dependencies = [
 files = [
     {file = "findpython-0.7.0-py3-none-any.whl", hash = "sha256:f53cfcc29536f5b83c962cf922bba8ff6d6a3c2a05fda6a45aa58a47d005d8fc"},
     {file = "findpython-0.7.0.tar.gz", hash = "sha256:8b31647c76352779a3c1a0806699b68e6a7bdc0b5c2ddd9af2a07a0d40c673dc"},
+]
+
+[[package]]
+name = "google-auth"
+version = "2.40.3"
+requires_python = ">=3.7"
+summary = "Google Authentication Library"
+dependencies = [
+    "cachetools<6.0,>=2.0.0",
+    "pyasn1-modules>=0.2.1",
+    "rsa<5,>=3.1.4",
+]
+files = [
+    {file = "google_auth-2.40.3-py2.py3-none-any.whl", hash = "sha256:1370d4593e86213563547f97a92752fc658456fe4514c809544f330fed45a7ca"},
+    {file = "google_auth-2.40.3.tar.gz", hash = "sha256:500c3a29adedeb36ea9cf24b8d10858e152f2412e3ca37829b3fa18e33d63b77"},
+]
+
+[[package]]
+name = "google-auth-oauthlib"
+version = "1.2.2"
+requires_python = ">=3.6"
+summary = "Google Authentication Library"
+dependencies = [
+    "google-auth>=2.15.0",
+    "requests-oauthlib>=0.7.0",
+]
+files = [
+    {file = "google_auth_oauthlib-1.2.2-py3-none-any.whl", hash = "sha256:fd619506f4b3908b5df17b65f39ca8d66ea56986e5472eb5978fd8f3786f00a2"},
+    {file = "google_auth_oauthlib-1.2.2.tar.gz", hash = "sha256:11046fb8d3348b296302dd939ace8af0a724042e8029c1b872d87fabc9f41684"},
 ]
 
 [[package]]
@@ -445,7 +484,7 @@ files = [
 
 [[package]]
 name = "langsmith"
-version = "0.4.12"
+version = "0.4.13"
 requires_python = ">=3.9"
 summary = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 dependencies = [
@@ -458,8 +497,8 @@ dependencies = [
     "zstandard>=0.23.0",
 ]
 files = [
-    {file = "langsmith-0.4.12-py3-none-any.whl", hash = "sha256:adbd9bc9062ecda93117f124bc7ce4f09bf72b116c3297aef47cbbb7df1f0582"},
-    {file = "langsmith-0.4.12.tar.gz", hash = "sha256:95cb05772da0325e5e4ed48b5df859ebcac801804e25702fc0543589be7bbfb1"},
+    {file = "langsmith-0.4.13-py3-none-any.whl", hash = "sha256:dab7b16ee16986995007bf5a777f45c18f8bf7453f67ae2ebcb46ce43c214297"},
+    {file = "langsmith-0.4.13.tar.gz", hash = "sha256:1ae7dbb5d8150647406f49885a2dd16ab12bd990254b5dc23718838b3d086fde"},
 ]
 
 [[package]]
@@ -585,6 +624,16 @@ files = [
     {file = "numpy-1.26.4-cp311-cp311-win32.whl", hash = "sha256:1af303d6b2210eb850fcf03064d364652b7120803a0b872f5211f5234b399f20"},
     {file = "numpy-1.26.4-cp311-cp311-win_amd64.whl", hash = "sha256:cd25bcecc4974d09257ffcd1f098ee778f7834c3ad767fe5db785be9a4aa9cb2"},
     {file = "numpy-1.26.4.tar.gz", hash = "sha256:2a02aba9ed12e4ac4eb3ea9421c420301a0c6460d9830d74a9df87efa4912010"},
+]
+
+[[package]]
+name = "oauthlib"
+version = "3.3.1"
+requires_python = ">=3.8"
+summary = "A generic, spec-compliant, thorough implementation of the OAuth request-signing logic"
+files = [
+    {file = "oauthlib-3.3.1-py3-none-any.whl", hash = "sha256:88119c938d2b8fb88561af5f6ee0eec8cc8d552b7bb1f712743136eb7523b7a1"},
+    {file = "oauthlib-3.3.1.tar.gz", hash = "sha256:0f0f8aa759826a193cf66c12ea1af1637f87b9b4622d46e866952bb022e538c9"},
 ]
 
 [[package]]
@@ -737,6 +786,29 @@ dependencies = [
 files = [
     {file = "pre_commit-4.2.0-py2.py3-none-any.whl", hash = "sha256:a009ca7205f1eb497d10b845e52c838a98b6cdd2102a6c8e4540e94ee75c58bd"},
     {file = "pre_commit-4.2.0.tar.gz", hash = "sha256:601283b9757afd87d40c4c4a9b2b5de9637a8ea02eaff7adc2d0fb4e04841146"},
+]
+
+[[package]]
+name = "pyasn1"
+version = "0.6.1"
+requires_python = ">=3.8"
+summary = "Pure-Python implementation of ASN.1 types and DER/BER/CER codecs (X.208)"
+files = [
+    {file = "pyasn1-0.6.1-py3-none-any.whl", hash = "sha256:0d632f46f2ba09143da3a8afe9e33fb6f92fa2320ab7e886e2d0f7672af84629"},
+    {file = "pyasn1-0.6.1.tar.gz", hash = "sha256:6f580d2bdd84365380830acf45550f2511469f673cb4a5ae3857a3170128b034"},
+]
+
+[[package]]
+name = "pyasn1-modules"
+version = "0.4.2"
+requires_python = ">=3.8"
+summary = "A collection of ASN.1-based protocols modules"
+dependencies = [
+    "pyasn1<0.7.0,>=0.6.1",
+]
+files = [
+    {file = "pyasn1_modules-0.4.2-py3-none-any.whl", hash = "sha256:29253a9207ce32b64c3ac6600edc75368f98473906e8fd1043bd6b5b1de2c14a"},
+    {file = "pyasn1_modules-0.4.2.tar.gz", hash = "sha256:677091de870a80aae844b1ca6134f54652fa2c8c5a52aa396440ac3106e941e6"},
 ]
 
 [[package]]
@@ -981,18 +1053,22 @@ files = [
 
 [[package]]
 name = "quarter-lib"
-version = "0.0.28"
+version = "0.0.33"
 requires_python = ">=3.6"
 summary = "TBD"
 dependencies = [
+    "PyMySQL==1.0.2",
+    "google-auth-oauthlib==1.2.2",
+    "google-auth==2.40.3",
     "loguru",
     "pydantic",
     "python-dotenv",
     "requests",
+    "todoist-api-python==3.1.0",
 ]
 files = [
-    {file = "quarter_lib-0.0.28-py3-none-any.whl", hash = "sha256:fc250ab18e89f18caad746ae1aa3df4a6f53062b9a02dd05c8ae52fd063565db"},
-    {file = "quarter_lib-0.0.28.tar.gz", hash = "sha256:e750abc38f1af9bcd4a0ee0aca25b92ec0a14d5c422fb478c0f8a591b6e9a70e"},
+    {file = "quarter_lib-0.0.33-py3-none-any.whl", hash = "sha256:f5097203771213892358d117ef5649648043f35f95600e6f8043272f01148f29"},
+    {file = "quarter_lib-0.0.33.tar.gz", hash = "sha256:bbd91c413855b6fe95fd1214c6abb0be9d9b531e34ce7ecae4370f3321d28b72"},
 ]
 
 [[package]]
@@ -1009,6 +1085,20 @@ dependencies = [
 files = [
     {file = "requests-2.32.4-py3-none-any.whl", hash = "sha256:27babd3cda2a6d50b30443204ee89830707d396671944c998b5975b031ac2b2c"},
     {file = "requests-2.32.4.tar.gz", hash = "sha256:27d0316682c8a29834d3264820024b62a36942083d52caf2f14c0591336d3422"},
+]
+
+[[package]]
+name = "requests-oauthlib"
+version = "2.0.0"
+requires_python = ">=3.4"
+summary = "OAuthlib authentication support for Requests."
+dependencies = [
+    "oauthlib>=3.0.0",
+    "requests>=2.0.0",
+]
+files = [
+    {file = "requests-oauthlib-2.0.0.tar.gz", hash = "sha256:b3dffaebd884d8cd778494369603a9e7b58d29111bf6b41bdc2dcd87203af4e9"},
+    {file = "requests_oauthlib-2.0.0-py2.py3-none-any.whl", hash = "sha256:7dd8a5c40426b779b0868c404bdef9768deccf22749cde15852df527e6269b36"},
 ]
 
 [[package]]
@@ -1046,6 +1136,19 @@ dependencies = [
 files = [
     {file = "rich-14.1.0-py3-none-any.whl", hash = "sha256:536f5f1785986d6dbdea3c75205c473f970777b4a0d6c6dd1b696aa05a3fa04f"},
     {file = "rich-14.1.0.tar.gz", hash = "sha256:e497a48b844b0320d45007cdebfeaeed8db2a4f4bcf49f15e455cfc4af11eaa8"},
+]
+
+[[package]]
+name = "rsa"
+version = "4.9.1"
+requires_python = "<4,>=3.6"
+summary = "Pure-Python RSA implementation"
+dependencies = [
+    "pyasn1>=0.1.3",
+]
+files = [
+    {file = "rsa-4.9.1-py3-none-any.whl", hash = "sha256:68635866661c6836b8d39430f97a996acbd61bfa49406748ea243539fe239762"},
+    {file = "rsa-4.9.1.tar.gz", hash = "sha256:e7bdbfdb5497da4c07dfd35530e1a902659db6ff241e39d9953cad06ebd0ae75"},
 ]
 
 [[package]]
