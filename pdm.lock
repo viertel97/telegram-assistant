@@ -5,7 +5,7 @@
 groups = ["default", "dev", "documentation", "linting", "security", "testing", "type-checking"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:e5d0a2f9ce880237b29909c431a5fb255856deb2cf3fe7c90685f8aaf2550bfc"
+content_hash = "sha256:af1c75da1e6d66010aa0fa0a181031cc2965eea129561f13e95ffe9dbf4a377d"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -1166,11 +1166,12 @@ files = [
 
 [[package]]
 name = "quarter-lib"
-version = "0.0.34"
+version = "0.0.35"
 requires_python = ">=3.6"
 summary = "TBD"
 dependencies = [
     "PyMySQL==1.0.2",
+    "SpeechRecognition==3.14.3",
     "google-api-python-client==2.178.0",
     "google-auth-oauthlib==1.2.2",
     "google-auth==2.40.3",
@@ -1181,8 +1182,8 @@ dependencies = [
     "todoist-api-python==3.1.0",
 ]
 files = [
-    {file = "quarter_lib-0.0.34-py3-none-any.whl", hash = "sha256:c94cc8e123935400e09255afe74d9b51670b13ce68136e8cb90a80374fdf2070"},
-    {file = "quarter_lib-0.0.34.tar.gz", hash = "sha256:5350bc9393a5dd951e0449e4a5e97b67b8e3c583a3632bc39caa6cdffea5fdf2"},
+    {file = "quarter_lib-0.0.35-py3-none-any.whl", hash = "sha256:7e85d21cf440045b22f9474e890268c64fab0626983e0dafb675ca733c70446e"},
+    {file = "quarter_lib-0.0.35.tar.gz", hash = "sha256:565e9b9add8908539e871b0270828082ca7fb8f19fa14f7ebdd556f216bc9570"},
 ]
 
 [[package]]
@@ -1349,6 +1350,21 @@ summary = "A modern CSS selector implementation for Beautiful Soup."
 files = [
     {file = "soupsieve-2.7-py3-none-any.whl", hash = "sha256:6e60cc5c1ffaf1cebcc12e8188320b72071e922c2e897f737cadce79ad5d30c4"},
     {file = "soupsieve-2.7.tar.gz", hash = "sha256:ad282f9b6926286d2ead4750552c8a6142bc4c783fd66b0293547c8fe6ae126a"},
+]
+
+[[package]]
+name = "speechrecognition"
+version = "3.14.3"
+requires_python = ">=3.9"
+summary = "Library for performing speech recognition, with support for several engines and APIs, online and offline."
+dependencies = [
+    "audioop-lts; python_version >= \"3.13\"",
+    "standard-aifc; python_version >= \"3.13\"",
+    "typing-extensions",
+]
+files = [
+    {file = "speechrecognition-3.14.3-py3-none-any.whl", hash = "sha256:1859fbb09ae23fa759200f5b0677307f1fb16e2c5c798f4259fcc41dd5399fe6"},
+    {file = "speechrecognition-3.14.3.tar.gz", hash = "sha256:bdd2000a9897832b33095e33adfa48580787255706092e1346d1c6c36adae0a4"},
 ]
 
 [[package]]

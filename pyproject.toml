@@ -6,7 +6,7 @@ authors = [
     {name = "viertel97", email = "janik.viertel@outlook.com"},
 ]
 dependencies = [
-    "quarter-lib==0.0.34",
+    "quarter-lib==0.0.35",
     "beautifulsoup4==4.11.1",
     "loguru==0.6.0",
     "Markdown==3.3.4",
