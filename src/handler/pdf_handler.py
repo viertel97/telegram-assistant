@@ -8,7 +8,6 @@ import pandas as pd
 from quarter_lib.logging import setup_logging
 from telegram import Update
 
-from notebooks.onedrive_search import non_fiction
 from src.helper.config_helper import get_book_path_mapping_from_web, update_book_path_mapping
 from src.helper.file_helper import delete_files
 from src.services.logging_service import log_to_telegram
