@@ -10,6 +10,7 @@ from telegram import Update
 
 from src.helper.config_helper import get_book_path_mapping_from_web, update_book_path_mapping
 from src.helper.file_helper import delete_files
+from src.services.groq_service import detect_book_title_language
 from src.services.logging_service import log_to_telegram
 from src.services.microsoft_service import download_file_from_path, replace_file_in_onedrive, download_pdf_from_path, \
     search_files_combined
@@ -149,6 +150,7 @@ async def handle_pdf(file_path, file_name, update: Update, caption: str = None):
 
 def handle_missing_mapping_entry(path_to_identify: str, book_path_mapping: dict):
     title = path_to_identify.split("/")[2]  # Extract title from the path
+    author = path_to_identify.split("/")[1]  # Extract author from the path
     non_fiction = search_files_combined("Documents/PARA/3. Resources/Zot_Attachments/Reading/Books (Non-Fiction)",
                                         title, ".pdf")
     fiction = search_files_combined("Documents/PARA/3. Resources/Zot_Attachments/Reading/Books (Fiction)",
@@ -157,7 +159,8 @@ def handle_missing_mapping_entry(path_to_identify: str, book_path_mapping: dict)
     if not books or len(books) > 1:
         raise Exception(f"Multiple or no PDF files found for title: {title}")
     pdf_path = books[0]["path"]
-    book_path_mapping[path_to_identify] = pdf_path
+    book_path_mapping[path_to_identify]["onedrive_path"] = pdf_path
+    book_path_mapping[path_to_identify]["language"] = detect_book_title_language(title, author)
     update_book_path_mapping(book_path_mapping)
 
 

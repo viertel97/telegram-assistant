@@ -86,3 +86,51 @@ async def transcribe_groq(audio_file, file_function, text_function, prompt=None,
 		os.remove(chunk_file)
 		transcription_list.append(transcription)
 	return transcription_list
+
+
+def detect_book_title_language(title: str, author: str) -> str:
+	prompt = f"""You are a language detection expert. Analyze the following book title and author information and determine if it is German or English.
+
+Title: {title}
+Author: {author}
+
+Rules:
+1. Look at the book title and author name in the path
+2. Consider common German vs English words, grammar patterns, and linguistic markers
+3. German titles often contain words like "der", "die", "das", "und", "ein", "eine", etc.
+4. English titles often contain words like "the", "and", "a", "an", "of", "in", etc.
+5. Consider author names that might indicate language origin
+
+Respond with ONLY one of these two options:
+- "de" if the title appears to be German
+- "en" if the title appears to be English
+
+Do not provide any explanation, just the two-letter language code."""
+
+	try:
+		# Use Groq's chat completion for language detection
+		response = CLIENT.chat.completions.create(
+			model="llama-3.3-70b-versatile",  # Using a text model instead of audio model
+			messages=[
+				{"role": "user", "content": prompt}
+			],
+			temperature=0.1,  # Low temperature for consistent results
+			max_tokens=10
+		)
+
+		result = response.choices[0].message.content.strip().lower()
+
+		logger.info(f"Language detection result: {result}")
+
+		# Validate the response and default to English if unclear
+		if result == "de":
+			return "de"
+		elif result == "en":
+			return "en"
+		else:
+			logger.warning(f"Unexpected language detection result: {result}, defaulting to 'en'")
+			return "en"
+
+	except Exception as e:
+		logger.error(f"Error detecting language for title '{title}' and author '{author}': {e}")
+		return "en"
