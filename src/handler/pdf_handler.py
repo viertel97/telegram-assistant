@@ -151,11 +151,8 @@ async def handle_pdf(file_path, file_name, update: Update, caption: str = None):
 def handle_missing_mapping_entry(path_to_identify: str, book_path_mapping: dict):
     title = path_to_identify.split("/")[2]  # Extract title from the path
     author = path_to_identify.split("/")[1]  # Extract author from the path
-    non_fiction = search_files_combined("Documents/PARA/3. Resources/Zot_Attachments/Reading/Books (Non-Fiction)",
+    books = search_files_combined("Documents/PARA/3. Resources/Zot_Attachments",
                                         title, ".pdf")
-    fiction = search_files_combined("Documents/PARA/3. Resources/Zot_Attachments/Reading/Books (Fiction)",
-                                    title, ".pdf")
-    books = non_fiction + fiction
     if not books or len(books) > 1:
         raise Exception(f"Multiple or no PDF files found for title: {title}")
     pdf_path = books[0]["path"]
