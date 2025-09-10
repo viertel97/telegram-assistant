@@ -26,6 +26,8 @@ async def handle_xml(file_path, file_name, update: Update):
 	tasks = [filter_content(task.__dict__) for task in tasks]
 
 	de_duplicated_bookmarks = remove_duplicated_bookmarks(prepared_bookmarks, tasks, title, author)
+	await log_to_telegram(f"Found {len(de_duplicated_bookmarks)} new bookmarks for {title} by {author} (duplicates: {len(prepared_bookmarks) - len(de_duplicated_bookmarks)})", logger, update)
+
 	if de_duplicated_bookmarks:
 		transcribed_bookmarks = await get_bookmark_transcriptions(de_duplicated_bookmarks, update.message.caption, title,author, update)
 
