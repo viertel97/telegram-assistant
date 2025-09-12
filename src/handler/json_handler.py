@@ -24,6 +24,7 @@ async def handle_json(file_path, _, update):
 		if (
 			messages[key]["message"] is None
 			or messages[key]["message"]["content"] is None
+			or "parts" not in messages[key]["message"]["content"]
 			or messages[key]["message"]["content"]["parts"] == [""]
 		):
 			del_keys.append(key)
