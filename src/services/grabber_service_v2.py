@@ -178,7 +178,9 @@ def create_index_file_from_dict(index_file_name, timestamp, root_elements):
 ## All
 
 ```dataview
-TABLE WITHOUT ID link(file.link, content) AS "Content", description,
+TABLE WITHOUT ID link(file.link, replace(content, "
+", " ")) AS "Content", 
+    description,
     choice(is_completed = true, "✅", "❌") AS "Completion Status", 
     created, tags, project, source, due, deadline
 WHERE contains(file.folder, this.file.folder) and file != this.file
@@ -188,7 +190,9 @@ SORT created
 ## Open Tasks
 
 ```dataview
-TABLE WITHOUT ID link(file.link, content) AS "Content", description,
+TABLE WITHOUT ID link(file.link, replace(content, "
+", " ")) AS "Content", 
+    description,
     choice(is_completed = true, "✅", "❌") AS "Completion Status", 
     created, tags, project, source, due, deadline
 WHERE contains(file.folder, this.file.folder) and file != this.file and is_completed = false
