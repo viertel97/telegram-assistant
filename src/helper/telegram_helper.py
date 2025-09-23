@@ -25,10 +25,10 @@ async def retry_on_error(func, wait=0.1, retry=0, *args, **kwargs):
 
 async def send_long_message(message, send_function, **kwargs):
 	if len(message) < MAX_LENGTH_PER_MESSAGE:
-		await send_function(text=message, parse_mode=ParseMode.HTML, **kwargs)
+		await send_function(text=message, parse_mode=ParseMode.HTML, disable_notification=True, **kwargs)
 	else:
 		messages_needed = len(message) // MAX_LENGTH_PER_MESSAGE + 1
 		for i in range(messages_needed):
 			temp = message[i * MAX_LENGTH_PER_MESSAGE : (i + 1) * MAX_LENGTH_PER_MESSAGE]
-			await send_function(text=temp, parse_mode=ParseMode.HTML, **kwargs)
+			await send_function(text=temp, parse_mode=ParseMode.HTML, disable_notification=True, **kwargs)
 			time.sleep(5)
