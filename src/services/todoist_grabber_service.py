@@ -17,7 +17,7 @@ utc=pytz.UTC
 def get_data(days):
 	df_projects = pd.DataFrame(clean_api_response(list(TODOIST_API.get_projects()))).rename(columns={"id": "project_id", "name": "project"})
 	df_items = get_items(days, df_projects)
-	df_notes = get_comments(df_items)
+	df_notes = get_todoist_comments(df_items)
 
 	df_items = pd.concat([df_items, df_notes])
 	df_items["created_at_string"] = df_items["created_at"].dt.strftime("%Y-%m-%dT%H:%M:%S")
@@ -47,7 +47,7 @@ def get_labels(labels, df_labels):
 	return df_labels[df_labels["id"].isin(labels)]["name"].tolist()
 
 
-def get_comments(df_items):
+def get_todoist_comments(df_items):
 	logger.info("Getting comments")
 	comments = []
 	for index, file in df_items.iterrows():
@@ -57,6 +57,10 @@ def get_comments(df_items):
 				comment["completed_at"] = file["completed_at"]
 				comments.append(comment)
 	df_notes = pd.DataFrame(comments)
+
+	# if df_notes is empty, return empty dataframe with correct columns
+	if df_notes.empty:
+		return pd.DataFrame(columns=["id", "content", "parent_id", "created_at", "type", "source", "completed_at"])
 
 	df_notes.rename(columns={"task_id": "parent_id", "posted_at": "created_at"}, inplace=True)
 
