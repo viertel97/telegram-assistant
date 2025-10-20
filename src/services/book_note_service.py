@@ -1,5 +1,6 @@
 import time
 
+from datetime import datetime
 import markdown
 from bs4 import BeautifulSoup
 from quarter_lib.logging import setup_logging
@@ -21,6 +22,8 @@ NUMBER_OF_ITEMS_PER_CHUNK = 40
 def read_markdown(file_path):
 	with open(file_path, encoding="utf-8") as f:
 		text = f.read()
+		date = datetime.today().strftime("%Y-%m-%d")
+		text = text.replace("- [ ] ", "").replace(f" ➕ {date}", "")
 		html = markdown.markdown(text)
 	return BeautifulSoup(html, "html.parser")
 
@@ -66,6 +69,7 @@ def paragraph_to_task(paragraph, title, comment=None):
 
 
 def get_smallest_project(project_name_start_with):
+	logger.info("getting smallest project")
 	rework_projects = get_rework_projects(project_name_start_with)
 	project_sizes = [len(get_items_by_todoist_project(project.id)) for project in rework_projects]
 	min_size = min(project_sizes)

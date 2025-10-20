@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime, timedelta
+from itertools import chain
 from typing import Dict
 from urllib.parse import urljoin
 
@@ -38,12 +39,12 @@ HEADERS = create_headers(token=TODOIST_TOKEN)
 COMPLETE_TASKS_LIMIT = 200
 
 
-
-
-
 BASE_URL = "https://api.todoist.com"
-SYNC_VERSION = "v9"
-SYNC_API = urljoin(BASE_URL, f"/sync/{SYNC_VERSION}/")
+SYNC_VERSION = "v1"
+SYNC_API = urljoin(BASE_URL, f"{SYNC_VERSION}/sync")
+
+def get_from_iterable(iterable):
+	return list(chain.from_iterable(iterable))
 
 def get_sync_url(relative_path: str) -> str:
 	return urljoin(SYNC_API, relative_path)
