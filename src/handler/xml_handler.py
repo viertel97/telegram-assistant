@@ -1,5 +1,6 @@
 import uuid
 from json import dumps
+import pandas as pd
 
 from quarter_lib.logging import setup_logging
 from telegram import Update
@@ -42,7 +43,7 @@ async def handle_xml(file_path, file_name, update: Update):
 		for transcribed_bookmark in transcribed_bookmarks:
 			content = transcribed_bookmark["title"] + " - add highlight to Zotero"
 
-			if "timestamp" in transcribed_bookmark and transcribed_bookmark["timestamp"] is not None:
+			if "timestamp" in transcribed_bookmark and transcribed_bookmark["timestamp"] is not None and not pd.isna(transcribed_bookmark["timestamp"]):
 				recording_timestamp = transcribed_bookmark["timestamp"].strftime("%Y-%m-%d %H:%M:%S")
 			else:
 				recording_timestamp = None
