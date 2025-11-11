@@ -12,13 +12,13 @@ from src.helper.config_helper import get_book_path_mapping_from_web, update_book
 from src.helper.file_helper import delete_files
 from src.services.groq_service import detect_book_title_language
 from src.services.logging_service import log_to_telegram
-from src.services.microsoft_service import download_file_from_path, replace_file_in_onedrive, download_pdf_from_path, \
-    search_files_combined
+from src.services.microsoft_service import download_file_from_path, replace_file_in_onedrive, download_pdf_from_path, search_files_combined
 from src.services.todoist_service import (
-    get_items_by_todoist_project,
-    get_rework_projects,
-    run_todoist_sync_commands,
-    update_description,
+	get_items_by_todoist_project,
+	get_rework_projects,
+	run_todoist_sync_commands,
+	update_description,
+	TODOIST_API,
 )
 
 logger = setup_logging(__file__)
@@ -191,9 +191,9 @@ async def handle_pdf_during_xml_processing(path_to_identify, title, update: Upda
                 update,
             )
 
-            handle_missing_mapping_entry(path_to_identify, book_path_mapping)
-            await log_to_telegram("Created new mapping entry for missing PDF - check JSONbin",
-                                  logger, update)
+            # handle_missing_mapping_entry(path_to_identify, book_path_mapping)
+            # await log_to_telegram("Created new mapping entry for missing PDF - check JSONbin", logger, update)
+            TODOIST_API.add_task("No PDF mapping found for XML file: " + path_to_identify)
             return
 
         await log_to_telegram(
