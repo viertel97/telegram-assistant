@@ -42,7 +42,7 @@ async def handle_document(update: Update, context: CallbackContext):
 		await update.message.reply_text("start handle_zip")
 		done_message = await handle_zip(file_path, file_name, update)
 		await update.message.reply_text(done_message)
-	elif mime_type == "text/markdown":
+	elif mime_type == "text/markdown" or mime_type == "text/x-web-markdown":
 		await update.message.reply_text("start handle_markdown")
 		await handle_markdown(file_path, file_name, update)
 	elif mime_type == "application/json":
