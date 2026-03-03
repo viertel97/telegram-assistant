@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from itertools import chain
 from typing import Dict
 from urllib.parse import urljoin
-
+import requests
 from quarter_lib.akeyless import get_secrets
 from quarter_lib.logging import setup_logging
 from quarter_lib.todoist import (
@@ -20,7 +20,8 @@ from todoist_api_python.models import Task
 
 
 AUTHORIZATION = ("Authorization", "Bearer %s")
-
+BASE_URL = "https://api.todoist.com"
+API_VERSION = "v1"
 
 def create_headers(
 	token: str | None = None,
@@ -67,7 +68,34 @@ def add_to_todoist(text, project_id=None, labels=None) -> Task:
 
 
 def add_comment_to_task(task_id, comment):
-	return TODOIST_API.add_comment(task_id=task_id, content=comment)
+    return TODOIST_API.add_comment(task_id=task_id, content=comment)
+
+def add_comment_with_file_attachment(task_id: str, file_upload_result: dict, content: str = ""):
+    """
+    Add a comment with file attachment to a task using the REST API v2.
+    
+    Args:
+        task_id: The ID of the task to add the comment to
+        file_upload_result: The upload result from add_file_to_todoist containing file_name, file_size, file_type, file_url
+        content: Optional comment text content
+    
+    Returns:
+        The response from the API
+    """
+    url = f"{BASE_URL}/rest/v2/comments"
+    payload = {
+        "task_id": task_id,
+        "content": content,
+        "attachment": {
+            "file_name": file_upload_result["file_name"],
+            "file_size": file_upload_result["file_size"],
+            "file_type": file_upload_result["file_type"],
+            "file_url": file_upload_result["file_url"],
+        }
+    }
+    response = requests.post(url, headers=HEADERS, json=payload)
+    response.raise_for_status()
+    return response.json()
 
 
 def add_to_todoist_with_description(text, description, project_id=None):
@@ -86,8 +114,9 @@ async def add_to_todoist_with_file(final_message, file_path, project_id=None, de
 
 
 async def add_file_to_todoist(file_path):
-	return upload_file(file_path=file_path)
-
+    #return upload_file(file_path=file_path)
+    upload_result = requests.post(f"{BASE_URL}/sync/{API_VERSION}/uploads", headers=HEADERS, files={"file": open(file_path, "rb")}).json()
+    return upload_result
 
 def get_default_offset():
 	tz_info = get_user_state()
