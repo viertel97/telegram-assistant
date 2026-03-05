@@ -9,9 +9,7 @@ from src.services.book_note_service import get_smallest_project
 from src.services.bookmark_service import prepare_bookmark_transcriptions, get_bookmark_transcriptions, \
     remove_duplicated_bookmarks
 from src.services.logging_service import log_to_telegram
-from src.services.todoist_service import get_rework_projects, get_items_by_todoist_project, add_comment_with_file_attachment
-from todoist_api_python.api import TodoistAPI
-from quarter_lib.akeyless import get_secrets
+from src.services.todoist_service import get_rework_projects, get_items_by_todoist_project, add_comment_with_file_attachment, TODOIST_API
 from src.services.xml_service import xml_to_dict
 logger = setup_logging(__file__)
 
@@ -37,10 +35,6 @@ async def handle_xml(file_path, file_name, update: Update):
             update,
         )
 
-        # Initialize Todoist API
-        todoist_token = get_secrets("todoist/token")
-        todoist_api = TodoistAPI(todoist_token)
-
         # Process each bookmark using the new REST API
         for transcribed_bookmark in transcribed_bookmarks:
             content = transcribed_bookmark["title"] + " - add highlight to Zotero"
@@ -65,7 +59,7 @@ async def handle_xml(file_path, file_name, update: Update):
 
             try:
                 # Create task using the REST API
-                task = todoist_api.add_task(
+                task = TODOIST_API.add_task(
                     content=content,
                     description=desc,
                     project_id=project.id,
