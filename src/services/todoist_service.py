@@ -40,7 +40,6 @@ HEADERS = create_headers(token=TODOIST_TOKEN)
 COMPLETE_TASKS_LIMIT = 200
 
 
-BASE_URL = "https://api.todoist.com"
 SYNC_VERSION = "v1"
 SYNC_API = urljoin(BASE_URL, f"{SYNC_VERSION}/sync")
 
@@ -70,7 +69,7 @@ def add_to_todoist(text, project_id=None, labels=None) -> Task:
 def add_comment_to_task(task_id, comment):
     return TODOIST_API.add_comment(task_id=task_id, content=comment)
 
-def add_comment_with_file_attachment(task_id: str, file_upload_result: dict, content: str = ""):
+def add_comment_with_file_attachment(task_id: str, file_upload_result: dict, content: str = "Placeholder"):
     """
     Add a comment with file attachment to a task using the REST API v2.
     
@@ -82,10 +81,10 @@ def add_comment_with_file_attachment(task_id: str, file_upload_result: dict, con
     Returns:
         The response from the API
     """
-    url = f"{BASE_URL}/rest/v2/comments"
+    url = f"{BASE_URL}/api/{API_VERSION}/comments"
     payload = {
         "task_id": task_id,
-        "content": content,
+        "content": file_upload_result["file_name"],
         "attachment": {
             "file_name": file_upload_result["file_name"],
             "file_size": file_upload_result["file_size"],
@@ -115,7 +114,7 @@ async def add_to_todoist_with_file(final_message, file_path, project_id=None, de
 
 async def add_file_to_todoist(file_path):
     #return upload_file(file_path=file_path)
-    upload_result = requests.post(f"{BASE_URL}/sync/{API_VERSION}/uploads", headers=HEADERS, files={"file": open(file_path, "rb")}).json()
+    upload_result = requests.post(f"{BASE_URL}/api/{API_VERSION}/uploads", headers=HEADERS, files={"file": open(file_path, "rb")}).json()
     return upload_result
 
 def get_default_offset():
