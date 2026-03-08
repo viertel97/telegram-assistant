@@ -76,7 +76,6 @@ async def handle_pdf(file_path, file_name, update: Update, caption: str = None):
         except AttributeError:
             file_version = 1
         id_list = []
-        command_list = []
         for _, task in group.iterrows():
             text_to_search = task["recognized_text_" + selected_language]
             logger.info(f"text to search: {text_to_search}")
@@ -88,7 +87,7 @@ async def handle_pdf(file_path, file_name, update: Update, caption: str = None):
                 if filtered_findings:
                     try:
                         content = await add_annotation_to_finding(filtered_findings, task, text_to_search)
-                        command_list.append({"type": "item_close", "args": {"id": task.id}})
+                        TODOIST_API.complete_task(task.id)
                         id_list.append(task.id)
                         await log_to_telegram(
                             f"added '{content}' to page numbers '{page_numbers}' for '{len(filtered_findings)}' filtered findings",
@@ -127,13 +126,6 @@ async def handle_pdf(file_path, file_name, update: Update, caption: str = None):
             document=open(new_file_path, "rb"),
             caption=f"'{not_found_counter}' out of possible '{group.shape[0]}' could not have been added - therefore '{group.shape[0] - not_found_counter}' annotations has been added sucecessfully to the PDF '{file_name}'.",
         )
-        response = run_todoist_sync_commands(command_list)
-
-        logger.info(f"run_todoist_sync_commands response: {response}")
-        if response.status_code != 200:
-            await log_to_telegram("Error while syncing todoist", logger, update)
-        else:
-            await log_to_telegram(f"synced todoist with positive response: {response} - {response.text}", logger, update)
 
         delete_files(to_delete)
         return new_file_path
