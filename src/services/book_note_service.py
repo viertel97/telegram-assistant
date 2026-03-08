@@ -9,7 +9,7 @@ from src.services.logging_service import log_to_telegram
 from src.services.todoist_service import (
 	get_items_by_todoist_project,
 	get_rework_projects,
-	run_todoist_sync_commands,
+	TODOIST_API,
 )
 
 logger = setup_logging(__file__)
@@ -89,39 +89,17 @@ async def add_tasks(tasks, message, update):
 		update,
 	)
 	if min_size + len(tasks) <= 300:
-		command_list = []
-		for task in tasks:
-			if type(task) == tuple:
-				temp_task = list(task)
-				temp_task[0] = split_str_to_chars(temp_task[0])
-				command_list.append(
-					{
-						"type": "item_add",
-						"args": {
-							"content": temp_task[0],
-							"description": temp_task[1],
-							"project_id": project.id,
-						},
-					},
-				)
-			else:
-				task = split_str_to_chars(task)
-				command_list.append(
-					{
-						"type": "item_add",
-						"args": {"content": task, "project_id": project.id},
-					},
-				)
-		logger.info(f"adding batch of {len(command_list)} tasks")
-		chunks_of_40 = list(chunks(command_list, NUMBER_OF_ITEMS_PER_CHUNK))
+		logger.info(f"adding batch of {len(tasks)} tasks")
+		chunks_of_40 = list(chunks(tasks, NUMBER_OF_ITEMS_PER_CHUNK))
 		for chunk in chunks_of_40:
 			logger.info(f"adding chunk of {len(chunk)} tasks")
-			response = run_todoist_sync_commands(chunk)
-			logger.info(f"response code {response.status_code}")
-			if response.status_code != 200:
-				logger.error(f"response body {response.text}")
-				raise Exception("Error while adding to Todoist " + response.text)
-			logger.info(f"response:\n{response.json()}")
+			for task in chunk:
+				if type(task) == tuple:
+					content = split_str_to_chars(task[0])
+					TODOIST_API.add_task(content=content, project_id=project.id, description=task[1])
+				else:
+					content = split_str_to_chars(task)
+					TODOIST_API.add_task(content=content, project_id=project.id)
 			await log_to_telegram(f"Added {len(chunk)} tasks", logger, update)
 			if len(chunk) == NUMBER_OF_ITEMS_PER_CHUNK:
 				logger.info("sleeping for 10 seconds")
